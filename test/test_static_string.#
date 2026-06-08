@@ -1,0 +1,40 @@
+/// @file test/test_static_string.cc
+#include <o_io.hh>
+#include <o_static_string.hh>
+#include "catch/catch_amalgamated.hh"
+
+
+o_internal cval proc help__cval_1() -> Static_String {
+  constexpr StaticString<16> s = "Walter"_lit;
+  constexpr StaticString<16> t = "White";
+  return s;
+}
+o_internal cval proc test_static_string_cval() -> void {
+  auto s = help__cval_1();
+}
+
+o_internal cxpr proc test_static_string_content() -> void {
+  constexpr StaticString<5> str_1 = "White";
+  io::printn("str_1");
+  for (char c : str_1) {
+    io::printf("{:c} ", c);
+  }
+  io::printfn("\n{:s}", str_1.buf);
+  io::printfn("cap: {}", str_1.cap);
+  io::printfn("size: {}", str_1.len);
+
+  io::printn("str_2");
+  constexpr StaticString<6> str_2 = "Walter"_lit;
+  for (char c : str_2) {
+    io::printf("{:c} ", c);
+  }
+  io::printfn("\n{:s}", str_2.buf);
+  io::printfn("cap: {}", str_2.cap);
+  io::printfn("size: {}", str_2.len);
+}
+
+
+TEST_CASE("test_static_string") {
+  o_test("test_static_string_cval", test_static_string_cval);
+  o_test("test_static_string_content", test_static_string_content);
+}

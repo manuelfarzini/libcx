@@ -1,0 +1,29 @@
+/// @file test/xor_test.cpp
+#include <catch/catch_amalgamated.hh>
+#include <o_io.hh>
+#include <o_xoroshiro128p.hh>
+
+
+proc test_xoroshiro128p_1() -> void {
+  Xoroshiro128p xoro;
+  o_xoro::seed(xoro, 123456789);
+  for (int i = 0; i < 10; i++) {
+    float* res = o_xoro::generate_four(xoro);
+    o_io::printfn("Xoroshiro128P: {:3f} {:3f} {:3f} {:3f}", res[0], res[1], res[2], res[3]);
+  }
+}
+
+proc test_xoroshiro128p_2() -> void {
+  Xoroshiro128p xoro;
+  o_xoro::seed(xoro, 123456789);
+  for (int i = 0; i < 10; i++) {
+    float* res = o_xoro::generate_four(xoro);
+    o_io::printfn("Xoroshiro128P: {:3f} {:3f} {:3f} {:3f}", res[0], res[1], res[2], res[3]);
+  }
+}
+
+
+TEST_CASE("test_o_xoroshiro_128p") {
+  o_test("test_o_xoroshiro_128p_1", test_xoroshiro128p_1);
+  o_test("test_o_xoroshiro_128p_2", test_xoroshiro128p_2);
+}

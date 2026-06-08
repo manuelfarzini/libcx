@@ -1,0 +1,171 @@
+# file .clang-format
+
+### Core
+BasedOnStyle: Google
+ColumnLimit: 90
+UseTab: Never
+IndentWidth: 4
+TabWidth: 4
+BracedInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+IndentAccessModifiers: false
+AccessModifierOffset: -2
+PointerAlignment: Left
+ReferenceAlignment: Left
+SpaceAfterCStyleCast: true
+DerivePointerAlignment: false
+SpacesBeforeTrailingComments: 2
+
+### Macros
+IndentPPDirectives: BeforeHash
+AlignEscapedNewlines: LeftWithLastLine
+
+### Includes
+SortIncludes: false
+
+### Case
+IndentCaseLabels: false
+NamespaceIndentation: None
+
+## Break penalties
+BreakAfterReturnType: Automatic
+PenaltyReturnTypeOnItsOwnLine: 2
+PenaltyExcessCharacter: 1000
+PenaltyBreakTemplateDeclaration: 10
+PenaltyBreakBeforeFirstCallParameter: 10
+PenaltyBreakAssignment: 30
+PenaltyBreakComment: 50000
+PenaltyBreakOpenParenthesis: 50
+# PenaltyBreakBeforeMemberAccess: 50000
+# PenaltyBreakScopeResolution: 500000000
+# PenaltyIndentedWhitespace: 10
+# PenaltyBreakBeforeMemberAccess: 1
+# PenaltyBreakString: 1000000000
+
+### Empty lines
+InsertNewlineAtEOF: true
+IncludeBlocks: Preserve
+EmptyLineAfterAccessModifier: Leave
+EmptyLineBeforeAccessModifier: Leave
+MaxEmptyLinesToKeep: 3
+KeepEmptyLines:
+  AtEndOfFile: true
+  AtStartOfBlock: true
+  AtStartOfFile: false
+
+### Constructor
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: NextLine
+ConstructorInitializerIndentWidth: 2
+
+### Alignements
+AlignConsecutiveTableGenDefinitionColons: AcrossEmptyLines
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCaseColons: false
+#
+AlignConsecutiveAssignments:
+  Enabled: false #XXX:
+  AcrossEmptyLines: false
+  AcrossComments: false
+#
+AlignConsecutiveDeclarations:
+  Enabled: false #XXX:
+  AcrossEmptyLines: false
+  AcrossComments: false
+#
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+# Comments
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+
+### String
+AlwaysBreakBeforeMultilineStrings: false
+BreakStringLiterals: true
+
+### Misc
+BreakAfterAttributes: Leave
+
+### Templates
+BreakTemplateDeclarations: false
+SpaceAfterTemplateKeyword: false
+## Requires
+AllowShortCompoundRequirementOnASingleLine: true
+IndentRequiresClause: true
+RequiresClausePosition: WithPreceding
+## Concept
+BreakBeforeConceptDeclarations: Allowed
+
+### Lambdas
+LambdaBodyIndentation: OuterScope # Signature
+
+### Functions
+IndentWrappedFunctionNames: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackParameters: false
+BinPackArguments: true
+AllowBreakBeforeNoexceptSpecifier: Always
+AlignAfterOpenBracket: BlockIndent
+# AlignAfterOpenBracket: AlwaysBreak
+# AlignAfterOpenBracket: Align
+# BreakAfterOpenBracketFunction: false
+# BreakBeforeCloseBracketFunction: false
+# BreakFunctionDefinitionParameters: true
+
+### Operators
+AlignOperands: AlignAfterOperator
+BreakBeforeBinaryOperators: None
+# BreakBinaryOperations: Never
+
+### Short
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortCaseExpressionOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+AllowShortLambdasOnASingleLine: Inline
+
+### Brace
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterClass: false
+  AfterStruct: false
+  AfterEnum: false
+  AfterControlStatement: Never
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterUnion: false
+  AfterCaseLabel: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: false
+
+### Java
+JavaImportGroups: [java]
+BreakAfterJavaFieldAnnotations: false
+SortJavaStaticImport: After
+
+### Spacing
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterIfMacros: true
+  AfterRequiresInClause: true
+  AfterRequiresInExpression: false
+
+### Macros
+# ForEach
+ForEachMacros: [defer_loop, o_defer_loop]

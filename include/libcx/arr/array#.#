@@ -1,0 +1,151 @@
+/// \file libcx/arr/array_v1.hh
+// TODO:
+// make a version of find for both duplicates and non duplicates.
+#ifndef CX_ARR_ARRAY_V1_HH
+#define CX_ARR_ARRAY_V1_HH
+#include <libcx/config.hh>
+#include <libcx/traits.hh>
+#include <libcx/concepts.hh>
+#include <libcx/uti/ownership.hh>
+#include <libcx/uti/compare.hh>
+#include <libcx/uti/utilities.hh>
+#include <libcx/err/error.hh>
+
+namespace cx::arr {
+
+template<typename T, CUintegral auto N, CUintegral S = usize> struct Array {
+
+    CX_MEMBER_ALIASES(T, S);
+    using Value = Array<T, N, S>;
+
+    onedef glob cexpr Size len = N;
+    Elem buf[len];
+
+    finline cexpr proc operator[](Size idx) noexce->Elem& { return buf[idx]; }
+    finline cexpr proc operator[](Size idx) const noexce->Elem const& { return buf[idx]; }
+
+    finline cexpr proc begin() noexce -> Iter { return buf; }
+    finline cexpr proc end() noexce -> Iter { return buf + len; }
+    finline cexpr proc cbegin() const noexce -> Kter { return buf; }
+    finline cexpr proc cend() const noexce -> Kter { return buf + len; }
+};
+template<typename T> Array(T) -> Array<T, 1>;
+
+template<typename T, typename... U>
+Array(T, U...) -> Array<uti::enable_if<(same_as<T, U> && ...), T>, 1 + sizeof...(U)>;
+
+CX_CONCEPT_GEN_TEMPL(
+    Array, is_array, CArrayType,
+    VA_(typename T, CUintegral auto N, CUintegral S = usize),
+    VA_(T, N, S)
+);
+
+template<typename Cont, typename Elem>
+predicate matches_elem_in = same_or_cvref<uti::ElemIn<Cont>, Elem>;
+
+// typical scenario: no duplicates
+template<
+    CArrayType         Arr,
+    typename           Key,
+    uti::COrderComp    Cmp = Lne(),
+    Requires(std::totally_ordered_with<uti::ElemIn<Arr>, uti::PlainT<Key>>)>
+finline cexpr proc find_first(Arr const& arr, Key const& key, Cmp cmp) noexce -> isize
+{
+    isize j = cmp(arr[arr.len / 2], key) ? arr.len / 2 : 0;
+    for (; j < arr.len && cmp(arr[j], key);) {
+        j += 1;
+    }
+
+    if (uti::eq(arr[j], key)) {
+        return j;
+    }
+    return -j - 1;
+}
+
+// typical scenario: with duplicates
+template<
+    CArrayType              Arr, 
+    typename                Key,
+    uti::CEqualOrderComp    Cmp = uti::Leq>
+finline cexpr proc find_last(Arr const& arr, Key const& key, Cmp cmp) noexce -> isize
+    where std::totally_ordered_with<uti::ElemIn<Arr>, uti::PlainT<Key>>
+{
+    size_in(arr) j = !cmp(arr[arr.len / 2], key) ? 0 : arr.len / 2;
+    for (; j < arr.len && cmp(arr[j], key);) {
+        j += 1;
+    }
+    return -j - 1;
+}
+
+finline onedef cexpr proc _find_last(
+    CArrayType auto const&       arr, 
+    auto const&                  key,
+    uti::CEqualOrderComp auto    cmp
+) noexce -> isize
+    where std::totally_ordered_with<elem_in(arr), declt(key)>
+{
+    size_in(arr) j = !cmp(arr[arr.len / 2], key) ? 0 : arr.len / 2;
+    for (; j < arr.len && cmp(arr[j], key);) {
+        j += 1;
+    }
+    return -j - 1;
+}
+
+// TODO:(manu)
+// maybe this is a better interface
+finline onedef cexpr proc _arr_insert_with_dupli(
+    CArrayType auto&             arr,
+    auto&&                       elm,
+    uti::CEqualOrderComp auto    cmp
+) noexce -> bool {
+    CX_EXTRACT_ALIASES(arr);
+
+    Size j = _find_last(arr, elm, cmp);
+    if (j >= arr.len) {
+        return false;
+    }
+    for (Size i = j + 1; i < arr.len; i++) {
+        arr[i - 1] = arr[i];
+    }
+    arr[j] = uti::forward<decltype(elm)>(elm);
+
+    return true;
+}
+/// Insert an element `elm` into a sorted array `arr`.
+/// The last element is overwritten since it uses right shift.
+/// The ordering must match the one of the comparator `cmp`.
+/// Returns `false` if `i >= arr.len`, otherwise returns `true`,
+///   where `i` is the insert position.
+template<
+    CArrayType              Arr,
+    typename                Elem,
+    uti::CEqualOrderComp    Cmp = uti::Lne>
+finline onedef cexpr proc arr_insert_with_dupli(
+    Arr const& arr, Elem&& elm, Cmp cmp = uti::lne
+) noexce -> bool
+    where matches_elem_in<Arr, Elem>
+{
+    uti::SizeIn<Arr> j = arr::find_last(arr, elm, cmp);
+
+    if (j >= arr.len) {
+        return false;
+    }
+    for (auto i = j + 1; i < arr.len; i++) {
+        arr[i - 1] = arr[i];
+    }
+    arr[j] = cx_forward(elm);
+
+    return true;
+}
+
+// #define CX_TEST 1
+#if defined CX_TEST
+proc test() -> void
+{
+    Array<i32, 10u> arr{1, 2, 3, 4, 5};
+    _arr_insert_with_dupli(arr, 6, uti::lne);
+    // arr_insert_with_dupli(arr, 6);
+}
+#endif  // CX_TEST
+}  // namespace cx::arr
+#endif  // CX_ARR_ARRAY_V1

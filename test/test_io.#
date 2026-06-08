@@ -1,0 +1,105 @@
+/// @file test_io.cpp
+
+#include <chrono>
+#include <random>
+
+#include "o_error.hh"
+#include "o_io.hh"
+#include "o_utilities.hh"
+
+#include <catch/catch_amalgamated.hh>
+
+using std::vector;
+namespace chro = std::chrono;
+using ms = std::chrono::milliseconds;
+
+#define N 5000000
+
+
+void test_io_write_file_bench() {
+  fast_io::c_file c;
+
+  long long fast_io_duration = 0.0;
+  long long fmt_duration = 0.0;
+  long long fast_io_fmt_duration = 0.0;
+  long long cstdlib_duration = 0.0;
+
+  // fast_io
+  {
+    fast_io::obuf_file obuf("test/output/a.txt");
+    auto start = chro::high_resolution_clock::now();
+    for (auto i = 0; i < N; i++) {
+      fast_io::io::println(obuf, io::strview("Hello World"), io::chview(rand() % N));
+    }
+    auto end = chro::high_resolution_clock::now();
+    fast_io_duration = chro::duration_cast<ms>(end - start).count();
+  }
+
+  // fmt
+  {
+    FILE* obuf = fopen("test/output/b.txt", "w");
+    auto start = chro::high_resolution_clock::now();
+    for (auto i = 0; i < N; i++) {
+      fmt::println(obuf, "{} {}.", "Hello World", rand() % N);
+    }
+    auto end = chro::high_resolution_clock::now();
+    fmt_duration = chro::duration_cast<ms>(end - start).count();
+    fclose(obuf);
+  }
+
+  // fast_io + fmt
+  {
+    fast_io::obuf_file obuf("test/output/c.txt");
+    auto start = chro::high_resolution_clock::now();
+    for (auto i = 0; i < N; i++) {
+      fast_io::io::println(obuf, io::strview(fmt::format("{} {}.", "Hello World", rand() % N)));
+    }
+    auto end = chro::high_resolution_clock::now();
+    fast_io_fmt_duration = chro::duration_cast<ms>(end - start).count();
+  }
+
+  {
+    FILE* ofile = fopen("test/output/d.txt", "wb");
+    auto start = chro::high_resolution_clock::now();
+    for (auto i = 0; i < N; i++) {
+      fprintf(ofile, "%s %d", "Hello World", rand() & N);
+    }
+    auto end = chro::high_resolution_clock::now();
+    cstdlib_duration = chro::duration_cast<ms>(end - start).count();
+    fclose(ofile);
+  }
+
+  // system("clear");
+  io::printfn("\tfast_io on file time: {}ms.", fast_io_duration);
+  io::printfn("\tfmt on file time: {}ms.", fmt_duration);
+  io::printfn("\tfast_io + fmt on file time: {}ms.", fast_io_fmt_duration);
+  io::printfn("\tcstdlib on file time: {} ms.", cstdlib_duration);
+}
+
+// clang-format off
+void test_io_open_file(){
+  io::try_fopen("text.txt", "r")
+  with_val -> auto {
+    io::printn("This is a test text"); 
+    io::printn(val);
+    return Result<fast_io::c_file>(val.native_handle());
+  } end_val
+  with_val -> auto { 
+    io::printn(val); 
+    return Result<fast_io::c_file>(val.native_handle());
+  } end_val
+  with_err -> auto {
+    std::visit([](auto && e) {
+      using E = std::decay_t<decltype(e)>;
+      io::printn("error: ", io::strview(static_cast<E>(e).what()));
+    }, err);
+    return Result<fast_io::c_file>{std::unexpected(err)};
+  } end_err
+}
+// clang-format on
+
+
+TEST_CASE("test_io") {
+  o_test("test_io_write_file_bench", test_io_write_file_bench);
+  o_test("test_io_open_file", test_io_open_file);
+}

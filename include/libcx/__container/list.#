@@ -1,0 +1,168 @@
+#pragma once
+#include <libcx/cfg/conf.hh>
+#include <libcx/io/io.hh>
+#include <libcx/mem/memory.hh>
+#include <libcx/uti/utilities.hh>
+
+
+namespace cx::list {
+
+template<typename T>
+concept legal_ls_elem = uti::cp_or_mv_asble<T> && uti::def_initble<T>;
+
+/// Double linked list node.
+/// A generic record containing an `data` element of type `T` and two 
+/// `pointers` to other `ListNode<T>` records. Those `pointers` should 
+/// point to the `next`
+/// and `prev`ious records in a list.
+template<typename T, Requires(legal_ls_elem<T>)>
+struct ListNode {
+  using ElemType = T;
+  T data = {};
+  ListNode<T>* next = nullptr;
+  ListNode<T>* prev = nullptr;
+};
+
+/// Double linked list.
+/// A generic list of elememts
+template<typename T> requires(legal_ls_elem<T>)
+struct List {
+  CX_MEMBER_ALIASES(T, usize);
+  using Self = List<Elem>;
+
+  Size len = 0;
+  ListNode<Elem>* head = nullptr;
+  ListNode<Elem>* tail = nullptr;
+};
+
+CX_CONCEPT_GEN_TEMPL(ListNode, is_list_node, CListNode, typename T, T);
+#define List_Node CListNode auto
+
+CX_CONCEPT_GEN_TEMPL(List, is_list, CListType, typename T, T);
+#define List_Type CListType auto
+
+
+///
+template<typename T>
+finline cexpr proc MakeNode(T&& elem) -> ListNode<uti::rm_cvref<T>>* {
+  using U = uti::rm_cvref<T>;
+  auto node = mem::make<ListNode<U>>(1);
+  node->data = uti::forward<T>(elem);
+  return node;
+}
+
+///
+cexpr proc Append(List_Type& list, auto&& elem) -> bool
+    requires(uti::same_as<elemIn(list), uti::rm_cvref<decltype(elem)>>) {
+  auto* node = MakeNode(cx_forward<decltype(elem)>(elem));
+  if (node == nullptr) {
+    return false;
+  }
+
+  if (list.tail != nullptr) {
+    list.tail->next = node;
+    node->prev = list.tail;
+  } else {
+    list.head = node;
+  }
+
+  list.tail = node;
+  list.len++;
+  return true;
+}
+
+///
+cexpr auto Prepend(CListType auto& list, auto&& elem) -> bool
+    requires(uti::same_as<elemIn(list), uti::rm_cvref<decltype(elem)>>) {
+  auto* node = MakeNode(cx_forward<decltype(elem)>(elem));
+  if (node == nullptr) {
+    return false;
+  }
+
+  if (list.head != nullptr) {
+    list.head->prev = node;
+    node->next = list.head;
+  } else {
+    list.tail = node;
+  }
+
+  list.head = node;
+  list.len++;
+  return true;
+}
+
+///
+[[nodiscard]] cexpr auto PopTail(CListType auto& list) -> Maybe<ElemIn(list)> {
+  if (list.tail == nullptr) {
+    return std::nullopt;
+  }
+
+  ListNode<ElemIn(list)>* node = list.tail;
+  list.tail = list.tail->prev;
+  ElemIn(list) data = cx_move_or_copy_create(node->data);
+
+  if (list.tail == nullptr) {
+    list.head = nullptr;
+  } else {
+    list.tail->next = nullptr;
+  }
+
+  list.len--;
+  free(node);
+  return data;
+}
+
+/// XXX:
+cexpr auto PopHead(CListType auto const& list) -> Maybe<ElemIn(list)> {
+  return list.head->data;
+}
+
+
+//--------------------------------------------- Iterator -----------------------
+
+template<typename T> requires(legal_ls_elem<T>)
+struct ListIterator {
+  ListNode<T> const* cur = nullptr;
+
+  finline cexpr auto operator*() const noexce -> T const& {
+    return cur->data;
+  }
+  finline cexpr auto operator->() const noexce -> T const* {
+    return &cur->data;
+  }
+
+  finline cexpr auto operator++() noexce -> ListIterator& {
+    cur = cur->next;
+    return *this;
+  }
+  finline cexpr auto operator++(int) noexce -> ListIterator {
+    auto tmp = *this;
+    ++(*this);
+    return tmp;
+  }
+
+  finline cexpr auto operator==(ListIterator b) const noexce -> bool {
+    return cur == b.cur;
+  }
+  finline cexpr auto operator!=(ListIterator b) const noexce -> bool {
+    return cur != b.cur;
+  }
+};
+
+finline cexpr auto begin(CListType auto const& lst) noexce
+    -> ListIterator<ElemIn(lst)> {
+  return {lst.head};
+}
+finline cexpr auto end(CListType auto const& lst) noexce
+    -> ListIterator<ElemIn(lst)> {
+  return {nullptr};
+}
+
+
+//--------------------------------------------- Formatter ----------------------
+// XXX: no more needed once exposed the iterators
+// inln cexpr auto format_as(CListType auto const& list) noexce -> List<ElemIn(list)> const& {
+//   return list;
+// }
+
+}  // namespace cx::list

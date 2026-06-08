@@ -1,0 +1,65 @@
+/// @file test_error.cc
+
+#include <string>
+
+#include <o_error.hh>
+#include <o_io.hh>
+#include <o_utilities.hh>
+
+#include <catch/catch_amalgamated.hh>
+
+
+proc test_omicron_error_1_help(i32 num) -> Result<int> {
+  illegal_argument_if(num == 0, "the argument `num` cannot be zero");
+  return num;
+}
+
+proc chain_first(i32 num) -> Result<float> {
+  illegal_argument_if(num == 0, "the argument `num` cannot be zero");
+  return 1.0;
+}
+
+proc chain_second(i32 num) -> Result<int> {
+  illegal_argument_if(num == 0, "the argument `num` cannot be zero");
+  return num + 3;
+}
+
+proc chain_third(i32 num) -> Result<std::string> {
+  illegal_argument_if(num == 0, "the argument `num` cannot be zero");
+  return "success";
+}
+
+proc chain_fourth(i32 num) -> Result<bool> {
+  illegal_argument_if(num == 0.0f, "the argument `num` cannot be zero");
+  return true;
+}
+
+proc test_omicron_error_1() -> void {
+  auto result2 = test_omicron_error_1_help(1);
+  abort_any_error(result2, "result 2 ");
+}
+
+// clang-format off
+proc test_omicron_error_2() -> void  {
+  auto result = chain_first(10) 
+  then_return(Result<int>, { return chain_second(val); })
+  then_return(Result<std::string>, { return chain_third(val); })
+  then_return(Result<std::string>, { return chain_third(10); })
+  then_return(Result<bool>, { return chain_fourth(10); })
+  catch_error(Result<bool>, { return Result<bool>{std::unexpected(err)}; });
+}
+
+proc test_omicron_error_3() -> void {
+  auto result = chain_first(10)
+  with_val -> Result<int> { return chain_second(val); } end_val
+  with_val -> Result<std::string> { return chain_third(val); } end_val
+  with_val -> Result<bool> { return chain_fourth(10); } end_val
+  with_err -> Result<bool> { return std::unexpected(err); } end_err
+}
+// clang-format on
+
+
+TEST_CASE("test_omicron_error_") {
+  o_test("test_omicron_error_1", test_omicron_error_1);
+  o_test("test_omicron_error_1", test_omicron_error_2);
+}

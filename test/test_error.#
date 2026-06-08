@@ -1,0 +1,57 @@
+/// @file test_error.cc
+
+#include <string>
+
+#include <o_error.hh>
+#include <o_utilities.hh>
+
+#include <catch/catch_amalgamated.hh>
+
+proc test_error_help_1() -> Result<int> {
+  if (0) {
+    return 42;
+  }
+  if (1) {
+    return illegal_argument_wrap("message from help 1");
+  }
+}
+
+proc test_error_help_2() -> Result<std::string> {
+  if (0) {
+    return "Ok";
+  }
+  illegal_argument_if(1, "message from help 2");
+}
+
+proc test_error_help_3() -> Error_Type {
+  auto err = illegal_argument("message from help 3");
+  return illegal_argument("message from help 3");
+}
+
+proc test_error_abort() -> void {
+  var res = test_error_help_1();
+  if (!res) {
+    abort_any_error(res);
+  }
+  printf("Will not be printed");
+}
+
+proc test_error_creation_return_members() -> void {
+  var err = test_error_help_3();
+  printf("%s\n", err.s_sufx.c_str());
+  printf("%s\n", message(err).c_str());
+}
+
+proc test_error_memory_footprint() -> void {
+  var err = illegal_argument("test error");
+  printf("err.suffix: %lu\n", sizeof(err.s_sufx));
+  printf("err.desc: %lu\n", sizeof(err.desc));
+  printf("err.loc: %lu\n", sizeof(err.loc));
+  printf("err: %lu\n", sizeof(err));
+}
+
+TEST_CASE("test_error_memory_footprint") {
+  o_test("test_error_abort", test_error_memory_footprint);
+  // o_test("test_error_abort", test_error_abort);
+  // o_test("test_error_creation_return_members", test_error_creation_return_members);
+}

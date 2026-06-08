@@ -1,0 +1,16 @@
+#include <catch/catch_amalgamated.hh>
+#include <o_multi_array.hh>
+
+proc test_multi_array_base() -> void {
+  MultiArray<i32, float, u8> arr;
+  io::printn(arr.len);
+  io::printn(arr.cap);
+  realloc(arr);
+  io::printn(arr.len);
+  io::printn(arr.cap);
+}
+
+TEST_CASE("test_multi_array") {
+  o_test("test_multi_array_base", test_multi_array_base);
+}
+

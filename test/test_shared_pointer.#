@@ -1,0 +1,174 @@
+/// @file test/test_shared_pointer.cc
+#include <o_io.hh>
+#include <o_shared_pointer.hh>
+#include "catch/catch_amalgamated.hh"
+
+struct Base {
+  int x;
+  Base(int v = 0) : x(v) {}
+  virtual ~Base() = default;
+};
+
+struct Derived : public Base {
+  int y;
+  Derived(int vx, int vy) : Base(vx), y(vy) {}
+  // ~Derived() = default;
+};
+
+TEST_CASE("`make_shared`, create, destroy") {
+  auto s = o::mem::make_shared<Base>(123);
+  REQUIRE(s.has_value());
+  auto sp = o::uti::take(s);
+  REQUIRE(sp);
+  REQUIRE(sp.use_count() == 1);
+  REQUIRE(sp.object_ptr()->x == 123);
+}
+
+TEST_CASE("copy and move semantics") {
+  auto s = o::mem::make_shared<int>(42);
+  auto sp1 = o::uti::take(s);
+  REQUIRE(sp1.use_count() == 1);
+
+  // copy
+  auto sp2 = sp1;
+  REQUIRE(sp1.use_count() == 2);
+  REQUIRE(sp2.use_count() == 2);
+
+  // move
+  auto sp3 = o::uti::move(sp2);
+  REQUIRE(sp3.use_count() == 2);
+  REQUIRE(!sp2);
+}
+
+TEST_CASE("subtyping support") {
+  auto s = o::mem::make_shared<Derived>(10, 20);
+  auto spd = o::uti::take(s);
+  REQUIRE(spd.use_count() == 1);
+
+  o::mem::shared_pointer<Base> spb = spd;  // upcast
+  REQUIRE(spb.use_count() == 2);
+  REQUIRE(spb.object_ptr()->x == 10);
+}
+
+TEST_CASE("object destruction") {
+  static bool destroyed = false;
+  struct S {
+    ~S() { destroyed = true; }
+  };
+
+  {
+    auto s = o::mem::make_shared<S>();
+    auto sp = o::uti::take(s);
+    REQUIRE(sp.use_count() == 1);
+  }
+
+  REQUIRE(destroyed);
+}
+
+TEST_CASE("null shared_pointer behavior") {
+  o::mem::shared_pointer<int> sp_null;
+  REQUIRE(!sp_null);
+  REQUIRE(sp_null.use_count() == 0);
+  sp_null.release();
+  REQUIRE(!sp_null);
+}
+
+TEST_CASE("weak_pointer basic behaviour with shared_pointer") {
+  // Create shared
+  auto s = o::mem::make_shared<int>(10);
+  REQUIRE(s.has_value());
+  auto sp = o::uti::take(s);
+  REQUIRE(sp.use_count() == 1);
+
+  // Create weak from shared
+  o::mem::weak_pointer<int> wp(sp);
+  REQUIRE(!wp.expired());
+  REQUIRE(wp.use_count() == 1);
+
+  // Lock produces a new shared
+  {
+    auto sp2 = wp.lock();
+    REQUIRE(sp2);
+    REQUIRE(sp2.use_count() == 2);
+    REQUIRE(sp.use_count() == 2);
+  }
+
+  // After sp2 goes out of scope, count goes back
+  REQUIRE(sp.use_count() == 1);
+}
+
+TEST_CASE("weak_pointer expired after shared release") {
+  o::mem::weak_pointer<int> wp2;
+  {
+    auto s = o::mem::make_shared<int>(30);
+    auto sp = o::uti::take(s);
+    wp2 = o::mem::weak_pointer<int>(sp);
+    REQUIRE(!wp2.expired());
+  }
+  // After leaving the scope, shared is destroyed → weak is expired
+  REQUIRE(wp2.expired());
+  auto sp_empty = wp2.lock();
+  REQUIRE(!sp_empty);
+}
+
+TEST_CASE("weak_pointer with derived to base conversion") {
+  struct Base {
+    virtual ~Base() = default;
+    int xb = 1;
+    virtual int foo() const { return 100; }
+  };
+  struct Derived : Base {
+    int y;
+    Derived(int y_) : y(y_) {}
+    int foo() const override { return y; }
+  };
+
+  auto s = o::mem::make_shared<Derived>(42);
+  REQUIRE(s.has_value());
+  auto spd = o::uti::take(s);
+  REQUIRE(spd.use_count() == 1);
+
+  // Upcast
+  o::mem::shared_pointer<Base> spb = spd;
+  REQUIRE(spb.use_count() == 2);
+
+  // Create weak from base
+  o::mem::weak_pointer<Base> wpb(spb);
+  REQUIRE(!wpb.expired());
+
+  // Lock and call virtual
+  auto spb2 = wpb.lock();
+  REQUIRE(spb2);
+  REQUIRE(spb2.use_count() == 3);
+
+  REQUIRE(spb2.object_ptr()->foo() == 42);
+
+  // Release some
+  spb = o::mem::shared_pointer<Base>{};
+  REQUIRE(spb2.use_count() == 2);
+  spb2 = o::mem::shared_pointer<Base>{};
+  REQUIRE(spd.use_count() == 1);
+}
+
+TEST_CASE("weak_pointer keeps control block alive until last weak released") {
+  static bool destroyed = false;
+  struct S {
+    ~S() { destroyed = true; }
+  };
+
+  o::mem::weak_pointer<S> wp;
+  {
+    auto s = o::mem::make_shared<S>();
+    auto sp = o::uti::move(s).value();
+    wp = o::mem::weak_pointer<S>(sp);
+    REQUIRE(!wp.expired());
+    REQUIRE(sp.use_count() == 1);
+  }
+  // Shared released → object destroyed
+  REQUIRE(destroyed);
+
+  // Control block still alive because weak exists
+  REQUIRE(!wp.lock());
+
+  // Control block will be freed when wp is destroyed at end of test
+}

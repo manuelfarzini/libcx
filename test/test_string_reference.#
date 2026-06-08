@@ -1,0 +1,41 @@
+/// @file test/test_string_reference.cc
+
+#include <o_io.hh>
+#include <o_string_reference.hh>
+#include "catch/catch_amalgamated.hh"
+
+
+cval proc help__test_cval() -> StringReference {
+  constexpr auto t = StringReference{"this is a test"};
+  return t;
+}
+cval proc test_string_reference_cval() -> void {
+  constexpr auto t = StringReference{"this is a test"};
+  constexpr auto u = help__test_cval();
+  StringReference v = "this is a test";
+}
+
+cxpr proc test_string_reference_infos() -> void {
+  StringReference s = "Walter";
+  io::printfn("`StringReference` type size {}", o_size_of(s));
+  io::printfn("Example `StringReference` size: {}", s.size);
+  io::printf("Content: ");
+  for (usz i = 0; i < s.size; i++) {
+    io::printf("{:c} ", s[i]);
+  }
+  io::printn("");
+}
+
+cxpr proc test_string_reference_format() {
+  constexpr StringReference s = "Walter";
+  io::printfn("{}", s);
+  std::string u = fmt::format("{}", s);
+  io::printn(u);
+}
+
+TEST_CASE("test_string_reference") {
+  o_test("test_string_reference_cval", test_string_reference_cval);
+  o_test("test_string_reference_infos", test_string_reference_infos);
+  o_test("test_string_reference_format", test_string_reference_format);
+}
+

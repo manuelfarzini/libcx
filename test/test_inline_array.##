@@ -1,0 +1,80 @@
+/// @file test/test_inline_array.cc
+#include <catch/catch_amalgamated.hh>
+#include <olib/arr/inline_array.hh>
+#include <olib/uti/ostdlib.hh>
+
+
+void p(Inline_Array arr) {
+  usize i;
+  for (i = 0; i < arr.len; i++) {
+    o::io::printf("idx:{}|val:{}{:3}", i, arr[i], "");
+    if (i % 4 == 3) puts("");
+  }
+  if (i % 4 != 0) puts("");
+  puts("");
+}
+
+struct Test {
+  uint32 x; uint32 y;
+  auto operator<=>(Test const& that) const { return this->x <=> that.x; }
+  auto operator==(Test const& that) const { return this->x == that.x; }
+};
+
+constexpr std::string 
+format_as(Test const& test) { return fmt::format("({}, {})", test.x, test.y); }
+
+TEST_CASE("test array prototype") {
+  o::arr::InlineArray<uint32, 31, uint16> arr_int = {{1, 2, 3}, 3};
+  REQUIRE(arr_int.len == 3);
+  REQUIRE(arr_int.cap == 31);
+  REQUIRE(arr_int[0] == 1);
+  REQUIRE(sizeof(ElemIn(arr_int)) == 4);
+  REQUIRE(sizeof(SizeIn(arr_int)) == 2);
+
+  o::arr::insert(arr_int, 4u, o::uti::lne);
+  o::arr::insert(arr_int, 5u, [](usize a, usize b) { return a < b; });
+  o::arr::push_back(arr_int, {6, 7, 8});
+  puts("arr_int:");
+  p(arr_int);
+
+  o::arr::InlineArray<Test, 16, uint16> arr_test{};
+  REQUIRE(arr_test.len == 0);
+  REQUIRE(arr_test.cap == 16);
+  REQUIRE(sizeof(ElemIn(arr_test)) == 8);
+  REQUIRE(sizeof(SizeIn(arr_test)) == 2);
+  push_back(arr_test, 2, Test{0, 0});
+  push_back(arr_test, {{3, 3}, {4, 4}});
+  REQUIRE(arr_test.len == 4);
+
+  Test t5{5, 5};
+  Test t6{6, 6};
+  Test t1{1, 1};
+  Test t2{2, 2};
+  puts("arr_test:");
+  o::arr::push_back(arr_test, {t5, t6});
+  p(arr_test);
+  o::arr::insert(arr_test, t2, o::uti::lne);
+  o::arr::insert(arr_test, t1, o::uti::lne);
+  REQUIRE(arr_test.len == 8);
+  puts("arr_test:");
+  p(arr_test);
+}
+
+TEST_CASE("shift_right basic") {
+  o::arr::InlineArray<uint8, 8ul> arr1;
+  o::arr::push_back(arr1, {1, 2, 3, 4, 5, 7, 8, 6});
+  o::arr::shift_right(arr1, 5, arr1.len -1, 1);
+  arr1[5] = 6;                             
+  o::arr::InlineArray<uint8, 8ul> arr2 = {{1, 2, 3, 4, 5, 6, 7, 8}, 8};
+  REQUIRE(arr1 == arr2);
+}
+
+TEST_CASE("shift_left basic") {
+  REQUIRE(1 == 1);
+  o::arr::InlineArray<uint8, 10ul> arr1;
+  o::arr::push_back(arr1, {0, 0, 1, 2, 3, 4, 5, 6, 7, 8});
+  o::arr::shift_left(arr1, 2, arr1.len - 1, 1);
+  o::arr::InlineArray<uint8, 10ul> arr2 = {{0, 0, 2, 3, 4, 5, 6, 7, 7, 8}, 10};
+  REQUIRE(arr1 == arr2);
+}
+

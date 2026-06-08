@@ -1,0 +1,45 @@
+#include <catch/catch_amalgamated.hh>
+#include <cstdio>
+#include <o_asrm.hh>
+
+proc test_asrm_1() -> void { ASRM(
+    asrm_alloc(carr, char, 100);
+    asrm_alloc(i8arr, i8, 100);
+    asrm_alloc(u8arr, u8, 100);
+    asrm_alloc(f32arr, f32, 100);
+    asrm_alloc(f64arr, f64, 100);
+
+    for (int i = 0; i < 100; i++) {
+      printf("%d ", i8arr[i]);
+      if (i % 20 == 19) {
+        printf("\n");
+      }
+    }
+
+    asrm_fopen(file, "filepath.txt", "rw");
+)}
+
+TEST_CASE("test_asrm") {
+  o_test("test_asrm_1", test_asrm_1);
+}
+
+//  test_asrm_2: proc(x: ^cons i32) void {
+//    y: i32 = x^         //      y := x^     
+//    z: cons i32 = x^    //      z := cons x^
+//    p: ^i32 = x         //      p := x
+//    p: ^cons i32 = x    //      p := cons x
+//  }
+
+//  proc test_asrm_2: (x: ^cons i32) void {
+//    y := x^
+//    z: cons i32 = x^
+//    p := x
+//    q: ^i32 = x
+//  }
+
+//  proc test_asrm_2(^cons i32 x) void {
+//    y := x^          //  var y = x^
+//    cons i32 z = x^  //  let z = x^
+//    p := x
+//    ^i32 q = x
+//  }

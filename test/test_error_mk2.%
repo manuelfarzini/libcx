@@ -1,0 +1,41 @@
+#include <catch/catch_amalgamated.hh>
+#include <olib/mem/memory.hh>
+#include <olib/err/error.hh>
+
+TEST_CASE("simple error make and move") {
+
+  printf("err1: \n");
+  auto [val, err1] = o_argument_error_t(int, "Heisenberg");
+  o::mem::print_full_ptr(err1);
+  printf("Tag: %lu\n", (Uptr)o::err::get_tag(err1));
+  printf("%s\n", o::err::get_message(err1));
+
+  printf("\nerr2: \n");
+  auto err2 = o::uti::move(err1);
+  o::mem::print_full_ptr(err2);
+  printf("Tag: %lu\n", (Uptr)o::err::get_tag(err2));
+  printf("%s\n", o::err::get_message(err2));
+  printf("\n");
+}
+
+// TEST_CASE("result pair pattern") {
+//   
+//   auto [val2, err2] = o_argument_error_t(int, "another simple test");
+//   REQUIRE(o::err::get_tag(err2) == o::err::kArgumentError);
+//   REQUIRE(o::err::get_tag(err2) > o::err::kErrorTagLowerBound);
+//   print_full_ptr(err2);
+//   printf("%s\n\n", get_message(err2));
+//
+//   err2 = o::err::untag_pointer(err2, o::err::kErrorTagMask);
+//   REQUIRE(o::err::get_tag(err2) != o::err::kArgumentError);
+//   REQUIRE(o::err::get_tag(err2) == o::err::kNoneError);
+//   print_full_ptr(err2);
+//   printf("%s\n\n", get_message(err2));
+//
+//   err2 = o::err::tag_pointer(err2, o::err::kArgumentError);
+//   REQUIRE(o::err::get_tag(err2) == o::err::kArgumentError);
+//   REQUIRE(o::err::get_tag(err2) > o::err::kErrorTagLowerBound);
+//   print_full_ptr(err2);
+//   printf("%s\n\n", get_message(err2));
+// }
+

@@ -1,0 +1,51 @@
+/// @file test/test_string_literal.cc
+#include <olib/io.hh>
+#include <olib/str/string_literal.hh>
+#include "catch/catch_amalgamated.hh"
+
+
+consteval String_Literal help__test_cval_1() {
+  constexpr auto s = o::str::StringLiteral{"Jesse Pinkman"};
+  return s;
+}
+consteval String_Literal help__test_cval_2() {
+  constexpr auto s = o::str::lit_create("Walter ", "White");
+  return s;
+}
+
+TEST_CASE("consteval creation") {
+  constexpr o::str::StringLiteral s{"Gus Fring"};
+  REQUIRE(!strncmp(s.buf, "Gus Fring", s.len));
+  REQUIRE(sizeof(s) == 10); // NOTE: null-terminated
+
+  constexpr auto t = help__test_cval_1();
+  REQUIRE(!strncmp(t.buf, "Jesse Pinkman", t.len));
+  REQUIRE(sizeof(t) == 14); // NOTE: null-terminated
+
+  constexpr String_Literal v = help__test_cval_2();
+  REQUIRE(!strncmp(v.buf, "Walter White", v.len));
+  REQUIRE(sizeof(v) == 12); // NOTE: not null-terminated
+  o::io::printn("");
+}
+
+TEST_CASE("printing string literal informations") {
+  o::str::StringLiteral s{"Walter"};
+  REQUIRE(sizeof(s.buf) == 7);
+  REQUIRE(!strncmp(s.buf, "Walter", 7));
+  o::io::printfn("Literal s size: {}", s.len);
+  o::io::printf("Content: ");
+  for (usz i = 0; i < s.len; i++) {
+    o::io::printf("{:c} ", s[i]);
+  }
+  o::io::printn("\n\n");
+}
+
+TEST_CASE("testing the custom formatter") {
+  constexpr o::str::StringLiteral s{"White"};
+  std::string u = fmt::format("{}", s);
+  REQUIRE(!strncmp(u.c_str(), s.buf, s.len));
+  o::io::printfn("{}", s);
+  o::io::printn(u);
+  o::io::printn("\n");
+}
+

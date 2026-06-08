@@ -1,0 +1,51 @@
+/// @file test/test_string_pack.cc
+#include <o_io.hh>
+#include <o_string_pack.hh>
+#include "catch/catch_amalgamated.hh"
+
+
+cval proc help__cval_1() -> String_Pack {
+  constexpr auto s = StringPack{"Jesse"_lit, "Pinkman"_lit};
+  return s;
+}
+cval proc help__cval_2() -> String_Pack {
+  constexpr StringPack t = {"You"_lit, "'re"_lit, "Godddamn"_lit, "right"_lit};
+  return t;
+}
+cval proc test_string_pack_cval() -> void {
+  constexpr auto s = help__cval_1();
+  constexpr StringPack t = help__cval_2();
+}
+
+cxpr proc test_string_pack_content() -> Result<StringReference> {
+  constexpr StringPack str_pack = {"Walter"_lit, "White"_lit};
+
+  o_try(str_1, str_pack.at(0));
+  for (auto const& c : str_1) {
+    io::printf("{:c}", c);
+  }
+  io::printn("");
+
+  o_try(str_2, str_pack.at(1));
+  for (auto const& c : str_2) {
+    io::printf("{:c}", c);
+  }
+  io::printn("");
+
+  if (auto res = str_pack.at(99); !res) {
+    printf("%s\n", message(res.error()).c_str());
+  }
+
+  return str_1;
+}
+cxpr proc test_string_pack_size() -> usz {
+  constexpr auto sp = StringPack{"Gus"_lit, "Fring"_lit};
+  return sp.len;
+}
+
+
+TEST_CASE("test_string_pack") {
+  o_test("test_string_pack_cval", test_string_pack_cval);
+  o_test("test_string_pack_content", test_string_pack_content);
+  o_test("test_string_pack_size", auto n = test_string_pack_size, io::printfn("%zu", n));
+}

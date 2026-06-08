@@ -1,0 +1,51 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [],
+
+  "permission": {
+    "read": {
+      "*": "allow",
+      "test/**": "deny",
+      "extern/**": "deny",
+      "build/**": "deny",
+      ".cache/**": "deny",
+      ".clang-format": "deny",
+      "Doxyfile": "deny",
+      "Doxyfile.bck": "deny"
+    },
+
+    "edit": {
+      "*": "allow",
+      "test/**": "deny",
+      "extern/**": "deny",
+      "build/**": "deny",
+      ".cache/**": "deny",
+      ".clang-format": "deny",
+      "Doxyfile": "deny",
+      "Doxyfile.bck": "deny"
+    },
+
+    "list": {
+      "*": "allow",
+      "test": "deny",
+      "test/**": "deny",
+      "extern": "deny",
+      "extern/**": "deny",
+      "build": "deny",
+      "build/**": "deny",
+      ".cache": "deny",
+      ".cache/**": "deny"
+    },
+
+    "glob": {
+      "*": "allow",
+      "test/**": "deny",
+      "extern/**": "deny",
+      "build/**": "deny",
+      ".cache/**": "deny",
+      ".clang-format": "deny",
+      "Doxyfile": "deny",
+      "Doxyfile.bck": "deny"
+    }
+  }
+}

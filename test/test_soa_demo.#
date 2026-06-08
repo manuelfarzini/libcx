@@ -1,0 +1,114 @@
+/// @file test_soa.cc
+
+#include <catch/catch_amalgamated.hh>
+
+#include <cstdlib>
+#include <iostream>
+
+#include <o_io.hh>
+#include <o_soa.hh>
+
+using fast_io::mnp::chvw;
+
+void test_short_string() {
+  auto res1 = ShortString<>::make("Walter");
+  auto res2 = ShortString<>::make(std::string("White"));
+  std::string source3 = "Heisenberg";
+  auto res3 = ShortString<>::make(source3);
+  char source4[] = "Jesse";
+  auto res4 = ShortString<>::make(source4);
+  char* source5 = (char*) malloc(8 * sizeof(char));
+  std::memmove(source5, "Pinkman", 8);
+  auto res5 = ShortString<>::make(source5);
+  std::string source6;
+  std::getline(std::cin, source6);
+  auto res6 = ShortString<>::make(source6);
+
+  ShortString<> s1 = *res1;
+  ShortString<> s2 = *res2;
+  ShortString<> s3 = *res3;
+  ShortString<> s4 = *res4;
+  ShortString<> s5 = *res5;
+  ShortString<> s6 = *res6;
+
+  io::println(static_cast<string>(s1));
+  io::println(static_cast<string>(s2));
+  io::println(static_cast<string>(s3));
+  io::println(static_cast<string>(s4));
+  io::println(static_cast<string>(s5), " ", 5);
+  io::println(static_cast<string>(s6));
+
+  for (int i = 0; i < s5.size(); i++)
+    io::print(*(s5.data() + i), " ");
+  io::println("");
+
+  for (int i = 0; i < s5.size(); i++)
+    io::print(chvw(*s5[i]), " ");
+  io::println("");
+
+  for (auto& c : s5)
+    io::print(chvw(c));
+  io::println("");
+
+  io::println(chvw(*s3[0]), " ", s3.size());
+}
+
+void test_soa_construction() {
+  StructOfArrays<ShortString<>, int, float*, shared_ptr<int>> soa;  // XXX: does not work with uniqueptr
+  io::println(soa.len());
+  io::println(soa.cap());
+}
+
+
+TEST_CASE("test_soa") {
+
+  test_short_string();
+  test_soa_construction();
+
+  // int t = 10;
+  // int * p = &t;
+  // s.insert(t);
+  // s.insert(3);
+  // *p = 5;
+  // s.insert(*p);
+  //
+  // char c[] = "Walter";
+  // auto str = new char[6];
+  // std::memmove(str, "Jesse", 6);
+  // s.insert(c);
+  // s.insert(std::string("White"));
+  // s.insert("Heisenberg");
+  // s.insert(str);
+  //
+  // float f1 = 3.14;
+  // float f2 = 1.14;
+  // float f3 = 0.14;
+  // s.insert(&f1);
+  // s.insert(&f2);
+  // s.insert(&f3);
+  //
+  // auto pi1 = std::make_unique<int>(7);
+  // auto pi2 = std::make_unique<int>(1);
+  // auto pi3 = std::make_unique<int>(3);
+  // s.insert(std::move(pi1));
+  // s.insert(std::move(pi2));
+  // s.insert(std::move(pi3));
+  //
+  // io::println(s.at<int>(0));
+  // io::println(s.at<int>(1));
+  // io::println(s.at<int>(1));
+  // io::println(s.at<int>(2));
+  //
+  // io::println(s.at<std::string>(0));
+  // io::println(s.at<std::string>(1));
+  // io::println(s.at<std::string>(2));
+  // io::println(s.at<std::string>(3));
+  //
+  // io::println(*s.at<float *>(0));
+  // io::println(*s.at<float *>(1));
+  // io::println(*s.at<float *>(2));
+  //
+  // io::println(*s.at<std::unique_ptr<int>>(0));
+  // io::println(*s.at<std::unique_ptr<int>>(1));
+  // io::println(*s.at<std::unique_ptr<int>>(2));
+}

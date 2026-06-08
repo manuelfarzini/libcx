@@ -1,0 +1,17 @@
+/// @file test/test_zero_string.cc 
+#include <catch/catch_amalgamated.hh>
+#include <o_io.hh>
+#include <o_zero_string.hh>
+
+
+TEST_CASE("creation procedures") {
+  constexpr Zero_String s = o::str::zs_create("this ", "is ", "a ", "test");
+  REQUIRE(!strcmp(s.buf, "this is a test"));
+  constexpr Zero_String t = o::str::zs_create<5>("Walter White");
+  REQUIRE(!strncmp(t.buf, "Walt", 5));
+  constexpr auto u = o::str::ZeroString<16>{"test"};
+  REQUIRE(!strncmp(u.buf, "test", 5));
+  printf("%s\n", s.buf);
+  printf("%s\n", t.buf);
+  printf("%s\n", u.buf);
+}

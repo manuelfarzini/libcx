@@ -1,0 +1,35 @@
+/// @file test/test_error_mk2.cc
+#include <o_error_mk2.hh>
+#include "catch/catch_amalgamated.hh"
+
+
+auto test_tuple() -> Result_Pair {
+  if (std::rand() % 10 > 4) {
+    return o_argument_error(0, "test_tuple message");
+  }
+  return o_result(42);
+}
+
+// TEST_CASE("creation, storage") {
+//   constexpr o::err::ErrorMessage err_1{o::err::ErrorTag::CreationError,
+//                                        o::str::create("err_1 message")};
+//   puts(err_1.msg);
+//   printf("%td\n", o_size_of(err_1));
+//
+//   static constexpr o::err::ErrorMessage err_2 = __o_argument_error("err_2 message");
+//   puts(err_2.msg);
+//   printf("%td\n", o_size_of(err_2));
+//
+//   constexpr Error_Message err_3 = __o_argument_error("err_3 message");
+//   puts(err_3.msg);
+//   printf("%td\n", o_size_of(err_3));
+//   REQUIRE(true);
+// }
+
+TEST_CASE("pair pattern") {
+  auto [val, err] = test_tuple();
+  REQUIRE(err != nullptr);
+  if (err) {
+    printf("%s\n", err->msg);
+  }
+}
