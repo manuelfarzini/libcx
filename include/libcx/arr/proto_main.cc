@@ -4,5 +4,5 @@
 #include "libcx/arr/multi_array.hh"
 
 int main() {
-    CX_TEST_CALL(multi_array_base);
+    CX_TEST_RUN(multi_array);
 }

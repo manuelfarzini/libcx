@@ -31,6 +31,10 @@ predicate is_over_aligned =  align_of(Tp) > align_of(max_align_t);
 
 /**
     Copies `size` bytes from `src` to `dst`.
+    @arg
+    - `dst`: the destination pointer.
+    - `src`: the source pointer.
+    - `size`: the number of bytes to copy.
     @req
     - `dst` refers to storage valid for `size` bytes.
     - `src` refers to storage valid for `size` bytes.
@@ -45,6 +49,10 @@ mem_copy(mutaptr cx_restrict dst, readptr cx_restrict src, isize size) noexce ->
 
 /**
     Copies `num` elements of type `T` from `src` to `dst`.
+    @arg
+    - `dst`: the destination pointer.
+    - `src`: the source pointer.
+    - `num`: the number of elements to copy.
     @req
     - `dst` refers to storage valid for `num` elements of type `T`.
     - `src` refers to storage valid for `num` elements of type `T`.
@@ -62,7 +70,7 @@ inln cons fn mem_copy(T* cx_restrict dst, T const* cx_restrict src, isize num) n
 
 /** 
     Copies `size` bytes from `src` to `dst`.
-    @para
+    @arg
     - `dst`: the destination pointer.
     - `src`: the source pointer.
     @pre
@@ -75,7 +83,7 @@ inln cons fn mem_move(mutaptr dst, readptr src, isize size) -> void
 
 /** 
     Copies `num` elements of type `T` from `src` to `dst`.
-    @para
+    @arg
     - `dst`: the destination pointer
     - `src`: the source pointer
     @pre
@@ -90,7 +98,7 @@ inln cons fn mem_move(T* dst, T const* src, isize num) noexce -> void where (not
 /** 
     Takes `num` elements of type `T` from `src` to `dst`
     If `T` is not move assignable, then behaves like `memcopy`.
-    @para
+    @arg
     - `dst`: the destination pointer
     - `src`: the source pointer
     @pre
@@ -106,7 +114,7 @@ cons fn mem_take(T* dst, T const* src, isize num) noexce -> void where (not is_v
 
 /** 
     Sets `n` bytes of memory at `data` to `v`.
-    @para
+    @arg
     - `data`: pointer to the memory to be set
     - `v`: value to set the memory to
     - `n`: size of the memory to be set [Byte]
@@ -132,7 +140,7 @@ cons fn mem_set(mutaptr data, u8 val, isize size) -> ErrorCode
 
 /** 
     Zeroes `size` bytes of memory at `data`.
-    @para
+    @arg
     - `data`: pointer to the memory to be zeroed
     - `size`: size of the memory to be zeroed [Byte]
     @ret
@@ -148,7 +156,7 @@ cons fn mem_zero(mutaptr data, isize size) -> ErrorCode
 
 /** 
     Zeroes `size` bytes of memory at `data`.
-    @para
+    @arg
     - `data`: pointer to the memory to be zeroed
     - `size`: size of the memory to be zeroed [Byte]
     @ret
@@ -236,7 +244,7 @@ cons fn mem_zero_condition(mutaptr data, isize size) -> ErrorCode
 
 /** 
     Zero intializes `num` contiguous `T` objects at `ptr`.
-    @para
+    @arg
     - `ptr`: the pointer to the first element
     - `num`: the number of elements
     @ret
@@ -264,7 +272,7 @@ nodisc inln cons fn init_type(mutaptr ptr, isize num) noexce -> ErrorCode
 
 /**
     Initializes `num` contiguous `T` objects at `ptr` using `args` for each.
-    @para
+    @arg
     - `ptr`: the pointer to the first element;
     - `num`: the number of elements;
     - `args`: the arguments to the constructor.
@@ -296,7 +304,7 @@ nodisc cons fn init_va(
 
 /**
     Create and place `num` contiguous `T` objects given by `list` at `ptr`.
-    @para
+    @arg
     - `ptr`: the pointer to the first element;
     - `list`: the initializer list.
     @ret
@@ -328,7 +336,7 @@ cons fn init_ls(mutaptr ptr, initls<U> lst) noexce -> ErrorCode
 
 /**
     Uninitializes `num` contiguous `T` objects at `ptr`.
-    @para
+    @arg
     - `T`: the type of the objects.
     @arg
     - `ptr`: the pointer to the objects.

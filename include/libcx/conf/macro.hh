@@ -362,12 +362,19 @@
 #ifndef CX_TEST_DEFINE
     #define CX_TEST_DEFINE(name) inline auto test_##name() noexcept -> void
 #endif
-#ifndef CX_TEST_CALL
-    #define CX_TEST_CALL(name)                                                                      \
-        puts("\n////////////////////////////////////////////////////////////////////////////////"); \
-        puts("\n>>>>>>> running test `" STR_(name)"`");                                             \
-        cx::test_##name();                                                                          \
-        puts("\n>>>>>>> test " STR_(name) " passed");
+
+#ifndef CX_TEST_RUN
+    #define CX_TEST_RUN(name)                                                                         \
+        puts("\n////////////////////////////////////////////////////////////////////////////////\n"); \
+        cx::test_##name();
+#endif
+
+#ifndef CX_TEST_CASE
+    #define CX_TEST_CASE(name)                                                                        \
+        puts(">>>>>>> running test `" STR_(name)"`");                                                 \
+        cx::test_##name();                                                                            \
+        puts(">>>>>>> test `" STR_(name) "` passed");                                                 \
+        puts("\n////////////////////////////////////////////////////////////////////////////////\n");
 #endif
 
 ////////////////////////////////////////////

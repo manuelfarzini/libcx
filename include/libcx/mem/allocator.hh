@@ -209,11 +209,13 @@ cons fn heap_free(mutaptr ptr) noexce -> void
 
 ALIGNED_FREE(aligned_free, HeapAllocator)
 {
+    // XXX:(manu)
+    // - Should return void? Should passing a null pointer be an error?
     cx_unused(alc);
-    if (ptr != null) {
+    if (ptr != null) like {
         ::free(cast(void** ,ptr)[-1]);
     }
-    return Error_None;
+    return null;
 }
 
 ALIGNED_ALLOC(aligned_alloc, HeapAllocator) {

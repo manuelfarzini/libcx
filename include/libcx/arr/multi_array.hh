@@ -9,22 +9,35 @@
 #include "libcx/concept/multi.hh"
 #include "libcx/traits/multi.hh"
 #include "libcx/uti/typeseq.hh"
+#include "libcx/uti/tuple.hh"
 #include "libcx/uti/utilities.hh"
 
 namespace cx {
 inline namespace arr {
 
-#ifndef TypesIn
-    #define TypesIn(arr) cx::rm_cvref<declt(arr)>::Types
+#ifndef types_in
+    #define types_in(arr) cx::rm_cvref<declt(arr)>::Types
 #endif
 #ifndef base_ptr
-    #define base_ptr(arr) arr.ptrs[0]
+    #define base_ptr(arr) cast(mutaptr, get<0>((arr).ptrs))
 #endif
+
 ///////////////////////////////////////////
 // Multi Array
 
-/**
-    TODO
+/** XXX:
+    A dynamic Struct-Of-Arrays container.
+    @desc
+    - Stores one typed row pointer for each `Ts` in a tuple.
+    - Uses compile-time row access as the preferred access path.
+    @rep
+    - Layout: `[T0[cap]][pad][T1[cap]][pad]...[Tn[cap]]`.
+    - `ptrs` stores the typed begin pointer of each row.
+    - `len` is the number of initialized columns.
+    - `cap` is the number of allocated columns per row.
+    - `alc` is the allocator instance.
+    @nota
+    - Runtime row access is supported, but it is intended as a fallback path.
 **/
 template<SomeAllocator A, PlainZeroInitble... Ts> requires (va_size_of<Ts...> > 1)
 struct MultiArray {
@@ -35,37 +48,99 @@ struct MultiArray {
     onedef glob cons StaticArray<isize, rows> sizes{size_of(Ts)...};
     onedef glob cons StaticArray<isize, rows> aligns{align_of(Ts)...};
 
-    StaticArray<mutaptr, rows> ptrs;
+    Tuple<Ts*...> ptrs;
     isize len{};
     isize cap{};
     Alc alc{};  // XXX: handle initialization
 };
 
-CX_CONCEPT_GEN_TEMPL(
-    MultiArray, is_multi_array, SomeMultiArray, VA_(typename... Ts), VA_(Ts...)
-);
+CX_CONCEPT_GEN_TEMPL(MultiArray, is_multi_array, SomeMultiArray, 
+                     VA_(SomeAllocator A, typename... Ts), VA_(A, Ts...));
 #define Multi_Array cx::arr::SomeMultiArray auto
 
 ///////////////////////////////////////////
 // Base operations
 
-template<SomeMultiArray Arr>
-fn get_ptr(Arr& arr, isize row, isize col) -> mutaptr
+/**
+    Returns the typed pointer to row `Row`.
+    @arg
+    - `arr`: the multi-array.
+    @ret
+    - The typed pointer to row `Row`.
+    @pre
+    - `Row` is a valid row index.
+**/
+template<isize Row>
+fn row_ptr(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
 {
-    return ptr_add(arr.ptrs[row], col * Arr::sizes[row]);
+    return get<Row>(arr.ptrs);
 }
 
-template<isize Row, SomeMultiArray Arr>
-fn get(Arr& arr, isize col) -> TypeAt<Row, typename Arr::Types>&
+/**
+    Returns an erased pointer to the element at runtime row `row` and column `col`.
+    @arg
+    - `arr`: the multi-array.
+    - `row`: the runtime row index.
+    - `col`: the runtime column index.
+    @ret
+    - The erased pointer to the selected element.
+    - `null` if `row` is outside the valid range.
+    @pre
+    - `col` is a valid column index.
+    @nota
+    - Runtime row access is dispatched over the typed tuple rows.
+    - Intended for rare dynamic access, not for hot per-element loops.
+**/
+fn get_ptr(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
 {
-    using T = TypeAt<Row, typename Arr::Types>;
-    T* row = cast(T*, arr.ptrs[Row]);
-    return row[col];
+    if (row < 0 or row >= arr.rows) {
+        return null;
+    }
+
+    mutaptr ptr = null;
+    clos select_one = [&]<isize I>() inln_clos -> bool {
+        if (row != I) {
+            return false;
+        }
+        ptr = cast(mutaptr, row_ptr<I>(arr) + col);
+        return true;
+    };
+
+    [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
+        (select_one.template operator()<I>() || ...);
+    }(index_seq<arr.rows>{});
+
+    return ptr;
+}
+
+/**
+    Returns a typed reference to the element at compile-time row `Row` and column `col`.
+    @arg
+    - `arr`: the multi-array.
+    - `col`: the column index.
+    @ret
+    - The selected typed element.
+    @pre
+    - `Row` is a valid row index.
+    - `col` is a valid column index.
+**/
+template<isize Row>
+fn get(SomeMultiArray auto& arr, isize col) -> TypeAt<Row, typename types_in(arr)>&
+{
+    return row_ptr<Row>(arr)[col];
 }
 
 ///////////////////////////////////////////
 // Allocator
 
+/**
+    Ensures that the capacity is at least `wanted_cap`.
+    @arg
+    - `arr`: the multi-array.
+    - `wanted_cap`: the requested capacity.
+    @ret
+    - The generated `ErrorCode` if any, `null` otherwise.
+**/
 template<PlainZeroInitble... Ts>
 fn reserve(MultiArray<HeapAllocator, Ts...>& arr, isize wanted_cap) -> ErrorCode
 {
@@ -75,6 +150,16 @@ fn reserve(MultiArray<HeapAllocator, Ts...>& arr, isize wanted_cap) -> ErrorCode
     return resize(arr, wanted_cap);
 }
 
+/**
+    Ensures that the capacity is enough for `req_len` elements.
+    @arg
+    - `arr`: the multi-array.
+    - `req_len`: the requested logical length.
+    @ret
+    - The generated `ErrorCode` if any, `null` otherwise.
+    @nota
+    - The capacity grows by repeated doubling.
+**/
 template<PlainZeroInitble... Ts>
 fn ensure_capacity(MultiArray<HeapAllocator, Ts...>& arr, isize req_len) -> ErrorCode
 {
@@ -88,6 +173,19 @@ fn ensure_capacity(MultiArray<HeapAllocator, Ts...>& arr, isize req_len) -> Erro
     return reserve(arr, new_cap);
 }
 
+/**
+    Allocates backing storage for all rows.
+    @arg
+    - `arr`: the multi-array to initialize.
+    - `new_cap`: the allocated capacity per row.
+    - `align`: the minimum requested allocation alignment.
+    - `flags`: the allocation flags.
+    @ret
+    - The generated `ErrorCode` if any, `null` otherwise.
+    @nota
+    - Binds each typed row pointer inside `arr.ptrs`.
+    - Resets `len` to `0` and sets `cap` to `new_cap`.
+**/
 template<PlainZeroInitble... Ts>
 fn alloc(
     MultiArray<HeapAllocator, Ts...>&    arr,
@@ -104,7 +202,7 @@ fn alloc(
     clos bind_one = [&]<isize I, typename T>() inln_clos -> void {
         p = align_up<T>(p);
         T* beg = cast(T*, p);
-        arr.ptrs[I] = beg;
+        get<I>(arr.ptrs) = beg;
         p = beg + new_cap;
     };
 
@@ -117,6 +215,23 @@ fn alloc(
     return null;
 }
 
+/**
+    Reallocates backing storage for all rows.
+    @arg
+    - `arr`: the multi-array to resize.
+    - `new_cap`: the new allocated capacity per row.
+    - `align`: the minimum requested allocation alignment.
+    - `flags`: the allocation flags.
+    @ret
+    - The generated `ErrorCode` if any, `null` otherwise.
+    @pre
+    - `new_cap` is greater than or equal to `arr.cap`.
+    - `new_cap` is greater than or equal to `arr.len`.
+    @nota
+    - Copies the previous `len` elements for each row.
+    - Rebinds each typed row pointer inside `arr.ptrs`.
+    - Zeroes the newly allocated tail when `AllocFlags_Zero` is set.
+**/
 template<PlainZeroInitble... Ts>
 fn resize(
     MultiArray<HeapAllocator, Ts...>&    arr,
@@ -130,10 +245,8 @@ fn resize(
     mutaptr old_base = base_ptr(arr);
     auto old_ptrs = arr.ptrs;
     isize old_len = arr.len;
-
     isize ALIGN = max(align, multi_align_of<Ts...>());
     isize SIZE  = multi_size_of<Ts...>(new_cap);
-
     auto [ptr, err] = aligned_alloc(arr.alc, SIZE, ALIGN, flags & ~AllocFlags_Zero)
         or_return err;
 
@@ -141,8 +254,8 @@ fn resize(
     clos resize_one = [&]<isize I, typename T>() inln_clos -> void {
         p = align_up<T>(p);
         T* dst = cast(T*, p);
-        T* src = cast(T*, old_ptrs[I]);
-        arr.ptrs[I] = dst;
+        T* src = get<I>(old_ptrs);
+        get<I>(arr.ptrs) = dst;
         if (old_len > 0) {
             mem_copy(dst, src, old_len);
         }
@@ -157,28 +270,48 @@ fn resize(
     }(index_seq_va<Ts...>{});
 
     arr.cap = new_cap;
-    if (old_base != null) {
-        return aligned_free(arr.alc, old_base);
-    }
-
-    return null;
+    return aligned_free(arr.alc, old_base);
 }
 
+/**
+    Frees the backing allocation.
+    @arg
+    - `arr`: the multi-array to release.
+    @ret
+    - The generated `ErrorCode` if any, `null` otherwise.
+    @nota
+    - Clears all typed row pointers and resets length/capacity.
+**/
 template<PlainZeroInitble... Ts>
 fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
 {
     mutaptr ptr = base_ptr(arr);
-    if (ptr != null) {
-        aligned_free(arr.alc, ptr);
-    }
-    for (isize i = 0; i < arr.rows; i++) {
-        arr.ptrs[i] = null;
-    }
+
+    ErrorCode err = aligned_free(arr.alc, ptr) or_return err;
+
+    clos clear_one = [&]<isize I>() inln_clos -> void {
+        get<I>(arr.ptrs) = null;
+    };
+
+    [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
+        (clear_one.template operator()<I>(), ...);
+    }(index_seq<MultiArray<HeapAllocator, Ts...>::rows>{});
+
     arr.len = 0;
     arr.cap = 0;
     return null;
 }
 
+/**
+    Appends one logical column.
+    @arg
+    - `arr`: the multi-array.
+    - `els`: one element for each row.
+    @ret
+    - The generated `ErrorCode` if any, `null` otherwise.
+    @pre
+    - The given elements match the row types by value or reference compatibility.
+**/
 template<SomeMultiArray Arr, typename... Ts>
 fn push_back(Arr& arr, Ts&&... els) -> ErrorCode
     where (multi_same_or_ref<typename Arr::Types, TypeSeq<Ts...>>)
@@ -186,9 +319,7 @@ fn push_back(Arr& arr, Ts&&... els) -> ErrorCode
     ErrorCode err = ensure_capacity(arr, arr.len + 1) or_return err;
 
     clos push_one = [&]<isize I>(auto&& elm) inln_clos -> void {
-        using T = TypeAt<I, typename Arr::Types>;
-        T* dst = cast(T*, ptr_add(arr.ptrs[I], arr.len * Arr::sizes[I]));
-        *dst = forward<decltype(elm)>(elm);
+        row_ptr<I>(arr)[arr.len] = forward<decltype(elm)>(elm);
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
@@ -208,7 +339,6 @@ fn push_back(Arr& arr, Ts&&... els) -> ErrorCode
 CX_TEST_DEFINE(multi_array_base)
 {
     using namespace cx;
-
     using Arr = MultiArray<HeapAllocator, i32, f64>;
 
     Arr arr{};
@@ -217,8 +347,8 @@ CX_TEST_DEFINE(multi_array_base)
     assert(err == null);
     assert(arr.len == 0);
     assert(arr.cap == 2);
-    assert(arr.ptrs[0] != null);
-    assert(arr.ptrs[1] != null);
+    assert(get<0>(arr.ptrs) != null);
+    assert(get<1>(arr.ptrs) != null);
 
     err = push_back(arr, i32(10), f64(1.5));
     assert(err == null);
@@ -265,15 +395,104 @@ CX_TEST_DEFINE(multi_array_base)
     assert(err == null);
     assert(arr.len == 0);
     assert(arr.cap == 0);
-    assert(arr.ptrs[0] == null);
-    assert(arr.ptrs[1] == null);
+    assert(get<0>(arr.ptrs) == null);
+    assert(get<1>(arr.ptrs) == null);
+}
 
-    puts("test_multi_array_base: ok");
+CX_TEST_DEFINE(multi_array_runtime_ptr)
+{
+    using namespace cx;
+    using Arr = MultiArray<HeapAllocator, i32, f64, u8>;
+
+    Arr arr{};
+
+    ErrorCode err = alloc(arr, 1);
+    assert(err == null);
+    assert(arr.len == 0);
+    assert(arr.cap == 1);
+    assert(get<0>(arr.ptrs) != null);
+    assert(get<1>(arr.ptrs) != null);
+    assert(get<2>(arr.ptrs) != null);
+
+    err = push_back(arr, i32(10), f64(1.5), u8(1));
+    assert(err == null);
+    assert(arr.len == 1);
+    assert(arr.cap == 1);
+
+    err = push_back(arr, i32(20), f64(2.5), u8(2));
+    assert(err == null);
+    assert(arr.len == 2);
+    assert(arr.cap >= 2);
+
+    assert(get<0>(arr, 0) == i32(10));
+    assert(get<0>(arr, 1) == i32(20));
+    assert(get<1>(arr, 0) == f64(1.5));
+    assert(get<1>(arr, 1) == f64(2.5));
+    assert(get<2>(arr, 0) == u8(1));
+    assert(get<2>(arr, 1) == u8(2));
+
+    mutaptr raw0 = get_ptr(arr, 0, 1);
+    mutaptr raw1 = get_ptr(arr, 1, 1);
+    mutaptr raw2 = get_ptr(arr, 2, 1);
+
+    assert(raw0 != null);
+    assert(raw1 != null);
+    assert(raw2 != null);
+
+    i32* p0 = cast(i32*, raw0);
+    f64* p1 = cast(f64*, raw1);
+    u8*  p2 = cast(u8*,  raw2);
+
+    assert(*p0 == i32(20));
+    assert(*p1 == f64(2.5));
+    assert(*p2 == u8(2));
+
+    *p0 = i32(200);
+    *p1 = f64(22.5);
+    *p2 = u8(22);
+
+    assert(get<0>(arr, 1) == i32(200));
+    assert(get<1>(arr, 1) == f64(22.5));
+    assert(get<2>(arr, 1) == u8(22));
+
+    err = reserve(arr, 16);
+    assert(err == null);
+    assert(arr.len == 2);
+    assert(arr.cap >= 16);
+
+    assert(get<0>(arr, 0) == i32(10));
+    assert(get<0>(arr, 1) == i32(200));
+    assert(get<1>(arr, 0) == f64(1.5));
+    assert(get<1>(arr, 1) == f64(22.5));
+    assert(get<2>(arr, 0) == u8(1));
+    assert(get<2>(arr, 1) == u8(22));
+
+    get<0>(arr, 0) = i32(1000);
+    get<1>(arr, 0) = f64(1000.5);
+    get<2>(arr, 0) = u8(100);
+
+    assert(*cast(i32*, get_ptr(arr, 0, 0)) == i32(1000));
+    assert(*cast(f64*, get_ptr(arr, 1, 0)) == f64(1000.5));
+    assert(*cast(u8*,  get_ptr(arr, 2, 0)) == u8(100));
+
+    assert(get_ptr(arr, -1, 0) == null);
+    assert(get_ptr(arr, 3, 0) == null);
+
+    err = free(arr);
+    assert(err == null);
+    assert(arr.len == 0);
+    assert(arr.cap == 0);
+    assert(get<0>(arr.ptrs) == null);
+    assert(get<1>(arr.ptrs) == null);
+    assert(get<2>(arr.ptrs) == null);
+}
+
+CX_TEST_DEFINE(multi_array) {
+    CX_TEST_CASE(multi_array_base);
+    CX_TEST_CASE(multi_array_runtime_ptr);
 }
 
 #endif  // CX_TEST_MULTI_ARRAY
-
-
 
 }       // namespace arr
 }       // namespace cx
