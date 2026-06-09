@@ -1,8 +1,8 @@
 #pragma once
-#include <libcx/cfg/conf.hh>
-#include <libcx/io/io.hh>
-#include <libcx/mem/memory.hh>
-#include <libcx/uti/utilities.hh>
+#include "libcx/conf/config.hh"
+#include "libcx/io/io.hh"
+#include "libcx/mem/memory.hh"
+#include "libcx/uti/utilities.hh"
 
 
 namespace cx::list {

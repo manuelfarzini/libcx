@@ -2,7 +2,7 @@
 // TODO: review all the file
 #pragma once
 #include <llvm/Support/raw_os_ostream.h>
-#include <libcx/conf.hh>
+#include <libcx/config.hh>
 #include <libcx/str/string_reference.hh>
 #include <libcx/uti/utilities.hh>
 

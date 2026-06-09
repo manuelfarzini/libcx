@@ -1,6 +1,6 @@
 /** **/
 
-#include "libcx/conf.hh"
+#include "libcx/config.hh"
 #include "libcx/uti/iterator.hh"
 
 onedef cons fn cx_has_zero_byte_u64(u64 x) -> b32 {

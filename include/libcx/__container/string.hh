@@ -3,8 +3,8 @@
 #ifndef CX___CONTAINER_STRING_HH
 #define CX___CONTAINER_STRING_HH
 
-#include "libcx/conf.hh"
-#include "libcx/traits.hh"
+#include "libcx/config.hh"
+#include "libcx/trait.hh"
 #include "libcx/mem/allocator.hh"
 #include "libcx/__container/string_view.hh"
 

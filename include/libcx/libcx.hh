@@ -3,7 +3,7 @@
 #ifndef LIBCX_HH
 #define LIBCX_HH
 
-#include "libcx/conf.hh"
+#include "libcx/config.hh"
 #include "libcx/trait.hh"
 #include "libcx/concept.hh"
 

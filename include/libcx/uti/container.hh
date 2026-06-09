@@ -3,7 +3,7 @@
 #ifndef CX_UTILS_CONTAINER_HH
 #define CX_UTILS_CONTAINER_HH
 
-#include "libcx/conf.hh"
+#include "libcx/config.hh"
 #include "libcx/traits/types.hh"
 #include "libcx/uti/sfinae.hh"
 #include "libcx/uti/members.hh"

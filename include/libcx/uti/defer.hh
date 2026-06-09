@@ -3,7 +3,7 @@
 #ifndef CX_UTI_DEFER_HH
 #define CX_UTI_DEFER_HH
 
-#include "libcx/conf.hh"
+#include "libcx/config.hh"
 #include "libcx/uti/ownership.hh"
 
 namespace cx {

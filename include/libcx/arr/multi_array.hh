@@ -313,7 +313,7 @@ fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
     - The given elements match the row types by value or reference compatibility.
 **/
 template<SomeMultiArray Arr, typename... Ts>
-fn push_back(Arr& arr, Ts&&... els) -> ErrorCode
+fn append(Arr& arr, Ts&&... els) -> ErrorCode
     where (multi_same_or_ref<typename Arr::Types, TypeSeq<Ts...>>)
 {
     ErrorCode err = ensure_capacity(arr, arr.len + 1) or_return err;
@@ -350,17 +350,17 @@ CX_TEST_DEFINE(multi_array_base)
     assert(get<0>(arr.ptrs) != null);
     assert(get<1>(arr.ptrs) != null);
 
-    err = push_back(arr, i32(10), f64(1.5));
+    err = append(arr, i32(10), f64(1.5));
     assert(err == null);
     assert(arr.len == 1);
     assert(arr.cap == 2);
 
-    err = push_back(arr, i32(20), f64(2.5));
+    err = append(arr, i32(20), f64(2.5));
     assert(err == null);
     assert(arr.len == 2);
     assert(arr.cap == 2);
 
-    err = push_back(arr, i32(30), f64(3.5));
+    err = append(arr, i32(30), f64(3.5));
     assert(err == null);
     assert(arr.len == 3);
     assert(arr.cap >= 3);
@@ -414,12 +414,12 @@ CX_TEST_DEFINE(multi_array_runtime_ptr)
     assert(get<1>(arr.ptrs) != null);
     assert(get<2>(arr.ptrs) != null);
 
-    err = push_back(arr, i32(10), f64(1.5), u8(1));
+    err = append(arr, i32(10), f64(1.5), u8(1));
     assert(err == null);
     assert(arr.len == 1);
     assert(arr.cap == 1);
 
-    err = push_back(arr, i32(20), f64(2.5), u8(2));
+    err = append(arr, i32(20), f64(2.5), u8(2));
     assert(err == null);
     assert(arr.len == 2);
     assert(arr.cap >= 2);

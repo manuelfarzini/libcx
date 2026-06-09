@@ -3,8 +3,8 @@
 #ifndef CX_MEM_HEAP_HH
 #define CX_MEM_HEAP_HH
 
-#include "libcx/conf.hh"
-#include "libcx/__utils/ownership.hh"
+#include "libcx/config.hh"
+#include "libcx/uti/ownership.hh"
 #include "libcx/mem/common.hh"
 #include "libcx/mem/pointer.hh"
 
@@ -44,7 +44,7 @@ cons fn heap_aligned_free(mutaptr ptr) noexce -> void
 nodisc cons fn heap_aligned_alloc(
     isize     size,
     isize     align       = DEF_ALIGN,
-    mutaptr    old_ptr     = null,
+    mutaptr    old_ptr    = null,
     isize     old_size    = 0,
     b32       zero_mem    = true
 ) noexce -> Res<mutaptr, ErrorCode> {

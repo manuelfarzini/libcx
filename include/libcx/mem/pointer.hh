@@ -3,7 +3,7 @@
 #ifndef CX_MEM_POINTER_HH
 #define CX_MEM_POINTER_HH
 
-#include "libcx/conf.hh"
+#include "libcx/config.hh"
 
 namespace cx {
 inline namespace mem {
@@ -99,9 +99,9 @@ inln cons fn align_up(uptr ptr) noexce -> uptr
     Aligns `off` upward to the alignment of `Tp`.
     @para
     - `Tp`: the type to align to.
-    - `off`: the offset or size in bytes.
+    - `off`: the initial offset.
     @ret
-    - The aligned offset or size.
+    - The aligned offset.
 **/
 template<typename Tp>
 inln cons fn align_up(isize off) noexce -> isize
