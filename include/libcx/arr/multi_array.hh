@@ -30,8 +30,8 @@ inline namespace arr {
     @desc
     - Stores one typed row pointer for each `Ts` in a tuple.
     - Uses compile-time row access as the preferred access path.
-    @rep
     - Layout: `[T0[cap]][pad][T1[cap]][pad]...[Tn[cap]]`.
+    @rep
     - `ptrs` stores the typed begin pointer of each row.
     - `len` is the number of initialized columns.
     - `cap` is the number of allocated columns per row.
@@ -58,6 +58,24 @@ CX_CONCEPT_GEN_TEMPL(MultiArray, is_multi_array, SomeMultiArray,
                      VA_(SomeAllocator A, typename... Ts), VA_(A, Ts...));
 #define Multi_Array cx::arr::SomeMultiArray auto
 
+////////////////////////////////////////////
+// Macro
+
+#define CX__MULTI_ROW_TYPE(pair) CX__MULTI_ROW_TYPE_ pair
+#define CX__MULTI_ROW_TYPE_(T, name) T
+
+#define CX__MULTI_ROW_NAME(Name, pair) CX__MULTI_ROW_NAME_(Name, pair)
+#define CX__MULTI_ROW_NAME_(Name, pair) CX__MULTI_ROW_NAME__(Name, VA_ pair)
+#define CX__MULTI_ROW_NAME__(Name, T, name) CX_JOIN3(Name, _, name),
+
+#define CX_DEFINE_MULTI_ARRAY(Name, ...)                            \
+    enum {                                                          \
+        CX_FOR_EACH_WITH_ARG(CX__MULTI_ROW_NAME, Name, __VA_ARGS__) \
+    };                                                    \
+    using Name = MultiArray<                              \
+        CX_FOR_EACH_COMMA(CX_MULTI_ROW_TYPE, __VA_ARGS__) \
+    >;
+
 ///////////////////////////////////////////
 // Base operations
 
@@ -67,11 +85,9 @@ CX_CONCEPT_GEN_TEMPL(MultiArray, is_multi_array, SomeMultiArray,
     - `arr`: the multi-array.
     @ret
     - The typed pointer to row `Row`.
-    @pre
-    - `Row` is a valid row index.
 **/
 template<isize Row>
-fn row_ptr(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
+fn get_row_ptr(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
 {
     return get<Row>(arr.ptrs);
 }
@@ -91,19 +107,14 @@ fn row_ptr(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
     - Runtime row access is dispatched over the typed tuple rows.
     - Intended for rare dynamic access, not for hot per-element loops.
 **/
-fn get_ptr(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
+fn get_elm_ptr(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
 {
-    if (row < 0 or row >= arr.rows) {
-        return null;
-    }
-
     mutaptr ptr = null;
-    clos select_one = [&]<isize I>() inln_clos -> bool {
+    clos select_one = [&]<isize I>() inln_clos -> void {  // scan the rows
         if (row != I) {
-            return false;
+            return;
         }
-        ptr = cast(mutaptr, row_ptr<I>(arr) + col);
-        return true;
+        ptr = mutaptr(get_row_ptr<I>(arr) + col);
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
@@ -121,13 +132,12 @@ fn get_ptr(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
     @ret
     - The selected typed element.
     @pre
-    - `Row` is a valid row index.
     - `col` is a valid column index.
 **/
 template<isize Row>
-fn get(SomeMultiArray auto& arr, isize col) -> TypeAt<Row, typename types_in(arr)>&
+fn get_elm(SomeMultiArray auto& arr, isize col) -> TypeAt<Row, typename types_in(arr)>&
 {
-    return row_ptr<Row>(arr)[col];
+    return get_row_ptr<Row>(arr)[col];
 }
 
 ///////////////////////////////////////////
@@ -202,7 +212,7 @@ fn alloc(
     clos bind_one = [&]<isize I, typename T>() inln_clos -> void {
         p = align_up<T>(p);
         T* beg = cast(T*, p);
-        get<I>(arr.ptrs) = beg;
+        get_elm<I>(arr.ptrs) = beg;
         p = beg + new_cap;
     };
 
@@ -254,8 +264,8 @@ fn resize(
     clos resize_one = [&]<isize I, typename T>() inln_clos -> void {
         p = align_up<T>(p);
         T* dst = cast(T*, p);
-        T* src = get<I>(old_ptrs);
-        get<I>(arr.ptrs) = dst;
+        T* src = get_elm<I>(old_ptrs);
+        get_elm<I>(arr.ptrs) = dst;
         if (old_len > 0) {
             mem_copy(dst, src, old_len);
         }
@@ -286,11 +296,10 @@ template<PlainZeroInitble... Ts>
 fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
 {
     mutaptr ptr = base_ptr(arr);
-
     ErrorCode err = aligned_free(arr.alc, ptr) or_return err;
 
     clos clear_one = [&]<isize I>() inln_clos -> void {
-        get<I>(arr.ptrs) = null;
+        get_elm<I>(arr.ptrs) = null;
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
@@ -309,8 +318,6 @@ fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
     - `els`: one element for each row.
     @ret
     - The generated `ErrorCode` if any, `null` otherwise.
-    @pre
-    - The given elements match the row types by value or reference compatibility.
 **/
 template<SomeMultiArray Arr, typename... Ts>
 fn append(Arr& arr, Ts&&... els) -> ErrorCode
@@ -318,16 +325,32 @@ fn append(Arr& arr, Ts&&... els) -> ErrorCode
 {
     ErrorCode err = ensure_capacity(arr, arr.len + 1) or_return err;
 
-    clos push_one = [&]<isize I>(auto&& elm) inln_clos -> void {
-        row_ptr<I>(arr)[arr.len] = forward<decltype(elm)>(elm);
+    clos append_one = [&]<isize I>(auto&& elm) inln_clos -> void {
+        get_row_ptr<I>(arr)[arr.len] = forward<decltype(elm)>(elm);
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
-        (push_one.template operator()<I>(forward<Ts>(els)), ...);
+        (append_one.template operator()<I>(forward<Ts>(els)), ...);
     }(index_seq_va<Ts...>{});
 
     arr.len += 1;
     return null;
+}
+
+CX_TEST_DEFINE(multi_array_define_macro)
+{
+    //  CX_DECLARE_MULTI_ARRAY(position, A, f64, x, f64, y, f64, z);
+    //  =>
+    //      using position_x_t = distinct<f64>; (lambda trick)
+    //      using position_y_t = distinct<f64>;
+    //      using position_z_t = distinct<f64>;
+    //      using multi_position = MultiArray<A, position_x_t, position_y_t, position_z_t>;
+    //      enum {position_x, position_y, position_z}
+    //      multi_position positions{};
+    //      append(positions, 1.0, 2.0, 3.0);
+    //      assert(get<position_x>(positions) == 1.0);
+    //      assert(get<position_y>(positions) == 2.0);
+    //      assert(get<position_z>(positions) == 3.0);
 }
 
 ////////////////////////////////////////////
