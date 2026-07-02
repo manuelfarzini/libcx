@@ -436,7 +436,7 @@
     #define CX__FOR_EACH_31(M, a, ...) M(a) CX__FOR_EACH_30(M, __VA_ARGS__)
     #define CX__FOR_EACH_32(M, a, ...) M(a) CX__FOR_EACH_31(M, __VA_ARGS__)
 
-    #define CX__FOR_EACH_DISPATCH(N) CX_JOIN2(CX_FOR_EACH_, N)
+    #define CX__FOR_EACH_DISPATCH(N) CX_JOIN2(CX__FOR_EACH_, N)
 
     #define CX_FOR_EACH(M, ...)                                                    \
         CX__EXPAND(CX__FOR_EACH_DISPATCH(CX__COUNT_ARGS_(__VA_ARGS__))(M, __VA_ARGS__))

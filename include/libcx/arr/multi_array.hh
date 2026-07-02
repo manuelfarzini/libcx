@@ -61,20 +61,68 @@ CX_CONCEPT_GEN_TEMPL(MultiArray, is_multi_array, SomeMultiArray,
 ////////////////////////////////////////////
 // Macro
 
-#define CX__MULTI_ROW_TYPE(pair) CX__MULTI_ROW_TYPE_ pair
-#define CX__MULTI_ROW_TYPE_(T, name) T
+template<typename T, auto f>
+struct _Distinct {
+    using Type = T;
+    T value;
+    onedef _Distinct() = default;
+    onedef _Distinct(T v) : value(v) {}
+};
 
-#define CX__MULTI_ROW_NAME(Name, pair) CX__MULTI_ROW_NAME_(Name, pair)
-#define CX__MULTI_ROW_NAME_(Name, pair) CX__MULTI_ROW_NAME__(Name, VA_ pair)
-#define CX__MULTI_ROW_NAME__(Name, T, name) CX_JOIN3(Name, _, name),
+#ifndef cx_distinct
+    #define cx_distinct(T) _Distinct<T, [](){}>
+#endif
 
-#define CX_DEFINE_MULTI_ARRAY(Name, ...)                            \
-    enum {                                                          \
-        CX_FOR_EACH_WITH_ARG(CX__MULTI_ROW_NAME, Name, __VA_ARGS__) \
-    };                                                    \
-    using Name = MultiArray<                              \
-        CX_FOR_EACH_COMMA(CX_MULTI_ROW_TYPE, __VA_ARGS__) \
-    >;
+#define CX__MULTI_APPLY(M, args) M args
+
+#define CX__MULTI_ROW_TYPE_NAME(Name, pair) \
+    CX__MULTI_APPLY(CX__MULTI_ROW_TYPE_NAME_, (Name, VA_ pair))
+
+#define CX__MULTI_ROW_TYPE_NAME_(Name, T, name) \
+    CX_JOIN4(Name, _, name, _t)
+
+#define CX__MULTI_DECLARE_ROW_TYPE(Name, pair) \
+    CX__MULTI_APPLY(CX__MULTI_DECLARE_ROW_TYPE_, (Name, VA_ pair))
+
+#define CX__MULTI_DECLARE_ROW_TYPE_(Name, T, name) \
+    using CX__MULTI_ROW_TYPE_NAME_(Name, T, name) = T;
+    // using CX__MULTI_ROW_TYPE_NAME_(Name, T, name) = cx_distinct(T);
+
+#define CX__MULTI_TEMPLATE_ROW_TYPE(Name, pair) \
+    , CX__MULTI_ROW_TYPE_NAME(Name, pair)
+
+#define CX__MULTI_ROW_ENUM(Name, pair) \
+    CX__MULTI_APPLY(CX__MULTI_ROW_ENUM_, (Name, VA_ pair))
+
+#define CX__MULTI_ROW_ENUM_(Name, T, name) \
+    CX_JOIN3(Name, _, name),
+
+#define CX_DEFINE_MULTI_ARRAY(Name, Alc, ...)                               \
+    CX_FOR_EACH_WITH_ARG(                                                   \
+        CX__MULTI_DECLARE_ROW_TYPE, Name, __VA_ARGS__                       \
+    )                                                                       \
+    using CX_JOIN2(Name, s_t) = MultiArray<                                 \
+        Alc                                                                 \
+        CX_FOR_EACH_WITH_ARG(                                               \
+            CX__MULTI_TEMPLATE_ROW_TYPE, Name, __VA_ARGS__                  \
+        )                                                                   \
+    >;                                                                      \
+    enum {                                                                  \
+        CX_FOR_EACH_WITH_ARG(CX__MULTI_ROW_ENUM, Name, __VA_ARGS__)         \
+    };
+
+#define CX_DECLARE_MULTI_ARRAY(Name, Alc, ...)                              \
+    CX_DEFINE_MULTI_ARRAY(Name, Alc, __VA_ARGS__)                           \
+    CX_JOIN2(Name, s_t) CX_JOIN2(Name, s){};
+
+// CX_DECLARE_MULTI_ARRAY(position, A, f64, x, f64, y, f64, z);
+//  =>
+//      using position_x_t = cx_distinct(f64); (lambda trick)
+//      using position_y_t = cx_distinct<f64>;
+//      using position_z_t = cx_distinct<f64>;
+//      using multi_position = MultiArray<A, position_x_t, position_y_t, position_z_t>;
+//      enum {position_x, position_y, position_z}
+//      multi_position positions{};
 
 ///////////////////////////////////////////
 // Base operations
@@ -110,11 +158,12 @@ fn get_row_ptr(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
 fn get_elm_ptr(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
 {
     mutaptr ptr = null;
-    clos select_one = [&]<isize I>() inln_clos -> void {  // scan the rows
+    clos select_one = [&]<isize I>() inln_clos -> b32 {  // scan the rows
         if (row != I) {
-            return;
+            return false;
         }
         ptr = mutaptr(get_row_ptr<I>(arr) + col);
+        return true;
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
@@ -212,7 +261,7 @@ fn alloc(
     clos bind_one = [&]<isize I, typename T>() inln_clos -> void {
         p = align_up<T>(p);
         T* beg = cast(T*, p);
-        get_elm<I>(arr.ptrs) = beg;
+        get<I>(arr.ptrs) = beg;
         p = beg + new_cap;
     };
 
@@ -264,8 +313,8 @@ fn resize(
     clos resize_one = [&]<isize I, typename T>() inln_clos -> void {
         p = align_up<T>(p);
         T* dst = cast(T*, p);
-        T* src = get_elm<I>(old_ptrs);
-        get_elm<I>(arr.ptrs) = dst;
+        T* src = get<I>(old_ptrs);
+        get<I>(arr.ptrs) = dst;
         if (old_len > 0) {
             mem_copy(dst, src, old_len);
         }
@@ -299,7 +348,7 @@ fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
     ErrorCode err = aligned_free(arr.alc, ptr) or_return err;
 
     clos clear_one = [&]<isize I>() inln_clos -> void {
-        get_elm<I>(arr.ptrs) = null;
+        get<I>(arr.ptrs) = null;
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
@@ -326,7 +375,7 @@ fn append(Arr& arr, Ts&&... els) -> ErrorCode
     ErrorCode err = ensure_capacity(arr, arr.len + 1) or_return err;
 
     clos append_one = [&]<isize I>(auto&& elm) inln_clos -> void {
-        get_row_ptr<I>(arr)[arr.len] = forward<decltype(elm)>(elm);
+        get_row_ptr<I>(arr)[arr.len] = forward<declt(elm)>(elm);
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
@@ -337,26 +386,10 @@ fn append(Arr& arr, Ts&&... els) -> ErrorCode
     return null;
 }
 
-CX_TEST_DEFINE(multi_array_define_macro)
-{
-    //  CX_DECLARE_MULTI_ARRAY(position, A, f64, x, f64, y, f64, z);
-    //  =>
-    //      using position_x_t = distinct<f64>; (lambda trick)
-    //      using position_y_t = distinct<f64>;
-    //      using position_z_t = distinct<f64>;
-    //      using multi_position = MultiArray<A, position_x_t, position_y_t, position_z_t>;
-    //      enum {position_x, position_y, position_z}
-    //      multi_position positions{};
-    //      append(positions, 1.0, 2.0, 3.0);
-    //      assert(get<position_x>(positions) == 1.0);
-    //      assert(get<position_y>(positions) == 2.0);
-    //      assert(get<position_z>(positions) == 3.0);
-}
-
 ////////////////////////////////////////////
 // Testing
 
-// #define CX_TEST_MULTI_ARRAY 1
+#define CX_TEST_MULTI_ARRAY 1
 #if CX_TEST_MULTI_ARRAY
 
 CX_TEST_DEFINE(multi_array_base)
@@ -388,22 +421,22 @@ CX_TEST_DEFINE(multi_array_base)
     assert(arr.len == 3);
     assert(arr.cap >= 3);
 
-    assert(get<0>(arr, 0) == i32(10));
-    assert(get<0>(arr, 1) == i32(20));
-    assert(get<0>(arr, 2) == i32(30));
+    assert(get_elm<0>(arr, 0) == i32(10));
+    assert(get_elm<0>(arr, 1) == i32(20));
+    assert(get_elm<0>(arr, 2) == i32(30));
 
-    assert(get<1>(arr, 0) == f64(1.5));
-    assert(get<1>(arr, 1) == f64(2.5));
-    assert(get<1>(arr, 2) == f64(3.5));
+    assert(get_elm<1>(arr, 0) == f64(1.5));
+    assert(get_elm<1>(arr, 1) == f64(2.5));
+    assert(get_elm<1>(arr, 2) == f64(3.5));
 
-    get<0>(arr, 1) = i32(200);
-    get<1>(arr, 1) = f64(22.5);
+    get_elm<0>(arr, 1) = i32(200);
+    get_elm<1>(arr, 1) = f64(22.5);
 
-    assert(get<0>(arr, 1) == i32(200));
-    assert(get<1>(arr, 1) == f64(22.5));
+    assert(get_elm<0>(arr, 1) == i32(200));
+    assert(get_elm<1>(arr, 1) == f64(22.5));
 
-    i32* p0 = cast(i32*, get_ptr(arr, 0, 1));
-    f64* p1 = cast(f64*, get_ptr(arr, 1, 1));
+    i32* p0 = cast(i32*, get_elm_ptr(arr, 0, 1));
+    f64* p1 = cast(f64*, get_elm_ptr(arr, 1, 1));
 
     assert(*p0 == i32(200));
     assert(*p1 == f64(22.5));
@@ -411,8 +444,8 @@ CX_TEST_DEFINE(multi_array_base)
     *p0 = i32(300);
     *p1 = f64(33.5);
 
-    assert(get<0>(arr, 1) == i32(300));
-    assert(get<1>(arr, 1) == f64(33.5));
+    assert(get_elm<0>(arr, 1) == i32(300));
+    assert(get_elm<1>(arr, 1) == f64(33.5));
 
     err = free(arr);
     assert(err == null);
@@ -447,16 +480,16 @@ CX_TEST_DEFINE(multi_array_runtime_ptr)
     assert(arr.len == 2);
     assert(arr.cap >= 2);
 
-    assert(get<0>(arr, 0) == i32(10));
-    assert(get<0>(arr, 1) == i32(20));
-    assert(get<1>(arr, 0) == f64(1.5));
-    assert(get<1>(arr, 1) == f64(2.5));
-    assert(get<2>(arr, 0) == u8(1));
-    assert(get<2>(arr, 1) == u8(2));
+    assert(get_elm<0>(arr, 0) == i32(10));
+    assert(get_elm<0>(arr, 1) == i32(20));
+    assert(get_elm<1>(arr, 0) == f64(1.5));
+    assert(get_elm<1>(arr, 1) == f64(2.5));
+    assert(get_elm<2>(arr, 0) == u8(1));
+    assert(get_elm<2>(arr, 1) == u8(2));
 
-    mutaptr raw0 = get_ptr(arr, 0, 1);
-    mutaptr raw1 = get_ptr(arr, 1, 1);
-    mutaptr raw2 = get_ptr(arr, 2, 1);
+    mutaptr raw0 = get_elm_ptr(arr, 0, 1);
+    mutaptr raw1 = get_elm_ptr(arr, 1, 1);
+    mutaptr raw2 = get_elm_ptr(arr, 2, 1);
 
     assert(raw0 != null);
     assert(raw1 != null);
@@ -474,32 +507,32 @@ CX_TEST_DEFINE(multi_array_runtime_ptr)
     *p1 = f64(22.5);
     *p2 = u8(22);
 
-    assert(get<0>(arr, 1) == i32(200));
-    assert(get<1>(arr, 1) == f64(22.5));
-    assert(get<2>(arr, 1) == u8(22));
+    assert(get_elm<0>(arr, 1) == i32(200));
+    assert(get_elm<1>(arr, 1) == f64(22.5));
+    assert(get_elm<2>(arr, 1) == u8(22));
 
     err = reserve(arr, 16);
     assert(err == null);
     assert(arr.len == 2);
     assert(arr.cap >= 16);
 
-    assert(get<0>(arr, 0) == i32(10));
-    assert(get<0>(arr, 1) == i32(200));
-    assert(get<1>(arr, 0) == f64(1.5));
-    assert(get<1>(arr, 1) == f64(22.5));
-    assert(get<2>(arr, 0) == u8(1));
-    assert(get<2>(arr, 1) == u8(22));
+    assert(get_elm<0>(arr, 0) == i32(10));
+    assert(get_elm<0>(arr, 1) == i32(200));
+    assert(get_elm<1>(arr, 0) == f64(1.5));
+    assert(get_elm<1>(arr, 1) == f64(22.5));
+    assert(get_elm<2>(arr, 0) == u8(1));
+    assert(get_elm<2>(arr, 1) == u8(22));
 
-    get<0>(arr, 0) = i32(1000);
-    get<1>(arr, 0) = f64(1000.5);
-    get<2>(arr, 0) = u8(100);
+    get_elm<0>(arr, 0) = i32(1000);
+    get_elm<1>(arr, 0) = f64(1000.5);
+    get_elm<2>(arr, 0) = u8(100);
 
-    assert(*cast(i32*, get_ptr(arr, 0, 0)) == i32(1000));
-    assert(*cast(f64*, get_ptr(arr, 1, 0)) == f64(1000.5));
-    assert(*cast(u8*,  get_ptr(arr, 2, 0)) == u8(100));
+    assert(*cast(i32*, get_elm_ptr(arr, 0, 0)) == i32(1000));
+    assert(*cast(f64*, get_elm_ptr(arr, 1, 0)) == f64(1000.5));
+    assert(*cast(u8*,  get_elm_ptr(arr, 2, 0)) == u8(100));
 
-    assert(get_ptr(arr, -1, 0) == null);
-    assert(get_ptr(arr, 3, 0) == null);
+    assert(get_elm_ptr(arr, -1, 0) == null);
+    assert(get_elm_ptr(arr, 3, 0) == null);
 
     err = free(arr);
     assert(err == null);
@@ -510,9 +543,20 @@ CX_TEST_DEFINE(multi_array_runtime_ptr)
     assert(get<2>(arr.ptrs) == null);
 }
 
+CX_TEST_DEFINE(multi_array_declare_macro)
+{
+    CX_DECLARE_MULTI_ARRAY(cord, HeapAllocator, (f64, x), (f64, y), (f64, z))
+
+    append(cords, 1.0, 2.0, 3.0);
+    assert(get_elm<cord_x>(cords, 0) == 1.0);
+    assert(get_elm<cord_y>(cords, 0) == 2.0);
+    assert(get_elm<cord_z>(cords, 0) == 3.0);
+}
+
 CX_TEST_DEFINE(multi_array) {
     CX_TEST_CASE(multi_array_base);
     CX_TEST_CASE(multi_array_runtime_ptr);
+    CX_TEST_CASE(multi_array_declare_macro);
 }
 
 #endif  // CX_TEST_MULTI_ARRAY
