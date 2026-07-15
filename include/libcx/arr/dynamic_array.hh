@@ -52,8 +52,8 @@ CX_CONCEPT_GEN_TEMPL(
     VA_(typename E, SomeAllocator A, typename S), VA_(E, A, S)
 );
 
-template<typename T, typename E> propositio is_array_of = false;
-template<typename T, typename S, SomeAllocator A> propositio is_array_of<DynamicArray<T, S, A>, T> = true;
+template<typename T, typename E> proposition is_array_of = false;
+template<typename T, typename S, SomeAllocator A> proposition is_array_of<DynamicArray<T, S, A>, T> = true;
 template<typename Arr, typename E> concept SomeArrayOf = is_array_of<Arr, E>;
 
 /** Equality operator. **/
@@ -234,7 +234,7 @@ inln cons fn rshift(Arr& arr, Size beg, Size end, Size off) noexce -> bool
     @para
     - `arr`: the array to search
     - `key`: the key to compare against
-    - `cmp`: the ordering propositio
+    - `cmp`: the ordering proposition
     @ret
     - the encoded insertion point `-i - 1`, where `i` is after the last matching key
     @pre
@@ -267,7 +267,7 @@ inln cons fn find_last(Arr const& arr, Key const& key, Cmp cmp = lne) noexce -> 
     @para
     - `arr`: the array to search
     - `key`: the key to compare against
-    - `cmp`: the ordering propositio
+    - `cmp`: the ordering proposition
     @ret
     - the encoded insertion point `-i - 1`, where `i` is after the last matching key
     @pre

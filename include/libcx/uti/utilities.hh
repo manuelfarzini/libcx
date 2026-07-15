@@ -16,18 +16,15 @@
 namespace cx {
 inline namespace uti {
 
-/// Returns `true` if `x` is a power of two.
+/** Returns `true` if `x` is a power of two. **/
 inln cons fn is_power_of_two(isize const x) noexce -> b32
 {
-    if (x <= 0) {
-        return false;
-    }
-    return !(x & (x - 1));
+    return !(x <= 0) && !(x & (x - 1));
 }
 
-/// Holds if `x` is a power of two.
+/** Holds if `x` is a power of two. **/
 template<isize x>
-propositio is_power2 = is_power_of_two(x);
+proposition is_power2 = is_power_of_two(x);
 
 }       // namespace uti
 }       // namespace cx

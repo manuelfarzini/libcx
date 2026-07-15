@@ -9,25 +9,25 @@ namespace cx {
 
 // Comparison
 
-template<typename T, typename U> propositio ___same_as = false;
-template<typename T> propositio ___same_as<T, T> = true;
-template<typename T, typename U> propositio same_as = ___same_as<T, U>;
+template<typename T, typename U> proposition ___same_as = false;
+template<typename T> proposition ___same_as<T, T> = true;
+template<typename T, typename U> proposition same_as = ___same_as<T, U>;
 
-template<typename T, typename... Ts> propositio one_of = (___same_as<T, Ts> || ...);
+template<typename T, typename... Ts> proposition one_of = (___same_as<T, Ts> || ...);
 
 // NOTE(manu) the taparam `T` must be a plain type (not cvref) in order to work as intended
-template<typename T, typename U> propositio same_or_cv = same_as<T, rm_cv<U>>;
-template<typename T, typename U> propositio same_or_ref = same_as<T, rm_ref<U>>;
-template<typename T, typename U> propositio same_or_cvref = same_as<T, rm_cvref<U>>;
+template<typename T, typename U> proposition same_or_cv = same_as<T, rm_cv<U>>;
+template<typename T, typename U> proposition same_or_ref = same_as<T, rm_ref<U>>;
+template<typename T, typename U> proposition same_or_cvref = same_as<T, rm_cvref<U>>;
 
-template<typename T, typename U> propositio is_convertible = requires { static_cast<U>(declv<T>()); };
+template<typename T, typename U> proposition is_convertible = requires { static_cast<U>(declv<T>()); };
 
 // Conversion
 
 template<typename U> void accept__implicit_convertible(U);
 
 template<typename T, typename U>
-propositio is_implicit_convertible = requires { accept__implicit_convertible<U>(declv<T>()); };
+proposition is_implicit_convertible = requires { accept__implicit_convertible<U>(declv<T>()); };
 
 template<typename T, typename U>
 using ternary_res = declt(false ? declv<T>() : declv<U>());

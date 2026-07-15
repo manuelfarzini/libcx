@@ -12,20 +12,15 @@
 #include "libcx/uti/tuple.hh"
 #include "libcx/uti/utilities.hh"
 
+#include "libcx/arr/macro.hh"
+
 namespace cx {
 inline namespace arr {
-
-#ifndef types_in
-    #define types_in(arr) cx::rm_cvref<declt(arr)>::Types
-#endif
-#ifndef base_ptr
-    #define base_ptr(arr) cast(mutaptr, get<0>((arr).ptrs))
-#endif
 
 ///////////////////////////////////////////
 // Multi Array
 
-/** XXX:
+/** TODO:improve
     A dynamic Struct-Of-Arrays container.
     @desc
     - Stores one typed row pointer for each `Ts` in a tuple.
@@ -51,78 +46,12 @@ struct MultiArray {
     Tuple<Ts*...> ptrs;
     isize len{};
     isize cap{};
-    Alc alc{};  // XXX: handle initialization
+    Alc alc{};  // TODO: handle initialization
 };
 
 CX_CONCEPT_GEN_TEMPL(MultiArray, is_multi_array, SomeMultiArray, 
                      VA_(SomeAllocator A, typename... Ts), VA_(A, Ts...));
 #define Multi_Array cx::arr::SomeMultiArray auto
-
-////////////////////////////////////////////
-// Macro
-
-template<typename T, auto f>
-struct _Distinct {
-    using Type = T;
-    T value;
-    onedef _Distinct() = default;
-    onedef _Distinct(T v) : value(v) {}
-};
-
-#ifndef cx_distinct
-    #define cx_distinct(T) _Distinct<T, [](){}>
-#endif
-
-#define CX__MULTI_APPLY(M, args) M args
-
-#define CX__MULTI_ROW_TYPE_NAME(Name, pair) \
-    CX__MULTI_APPLY(CX__MULTI_ROW_TYPE_NAME_, (Name, VA_ pair))
-
-#define CX__MULTI_ROW_TYPE_NAME_(Name, T, name) \
-    CX_JOIN4(Name, _, name, _t)
-
-#define CX__MULTI_DECLARE_ROW_TYPE(Name, pair) \
-    CX__MULTI_APPLY(CX__MULTI_DECLARE_ROW_TYPE_, (Name, VA_ pair))
-
-#define CX__MULTI_DECLARE_ROW_TYPE_(Name, T, name) \
-    using CX__MULTI_ROW_TYPE_NAME_(Name, T, name) = T;
-    // using CX__MULTI_ROW_TYPE_NAME_(Name, T, name) = cx_distinct(T);
-
-#define CX__MULTI_TEMPLATE_ROW_TYPE(Name, pair) \
-    , CX__MULTI_ROW_TYPE_NAME(Name, pair)
-
-#define CX__MULTI_ROW_ENUM(Name, pair) \
-    CX__MULTI_APPLY(CX__MULTI_ROW_ENUM_, (Name, VA_ pair))
-
-#define CX__MULTI_ROW_ENUM_(Name, T, name) \
-    CX_JOIN3(Name, _, name),
-
-#define CX_DEFINE_MULTI_ARRAY(Name, Alc, ...)                               \
-    CX_FOR_EACH_WITH_ARG(                                                   \
-        CX__MULTI_DECLARE_ROW_TYPE, Name, __VA_ARGS__                       \
-    )                                                                       \
-    using CX_JOIN2(Name, s_t) = MultiArray<                                 \
-        Alc                                                                 \
-        CX_FOR_EACH_WITH_ARG(                                               \
-            CX__MULTI_TEMPLATE_ROW_TYPE, Name, __VA_ARGS__                  \
-        )                                                                   \
-    >;                                                                      \
-    enum {                                                                  \
-        CX_FOR_EACH_WITH_ARG(CX__MULTI_ROW_ENUM, Name, __VA_ARGS__)         \
-    };
-
-#define CX_DECLARE_MULTI_ARRAY(Name, Alc, ...)                              \
-    CX_DEFINE_MULTI_ARRAY(Name, Alc, __VA_ARGS__)                           \
-    CX_JOIN2(Name, s_t) CX_JOIN2(Name, s){};
-
-// CX_DECLARE_MULTI_ARRAY(position, A, f64, x, f64, y, f64, z);
-//  =>
-//      using position_x_t = cx_distinct(f64); (lambda trick)
-//      using position_y_t = cx_distinct<f64>;
-//      using position_z_t = cx_distinct<f64>;
-//      using multi_position = MultiArray<A, position_x_t, position_y_t, position_z_t>;
-//      enum {position_x, position_y, position_z}
-//      multi_position positions{};
 
 ///////////////////////////////////////////
 // Base operations
@@ -135,7 +64,7 @@ struct _Distinct {
     - The typed pointer to row `Row`.
 **/
 template<isize Row>
-fn get_row_ptr(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
+fn get_row(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
 {
     return get<Row>(arr.ptrs);
 }
@@ -155,14 +84,14 @@ fn get_row_ptr(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
     - Runtime row access is dispatched over the typed tuple rows.
     - Intended for rare dynamic access, not for hot per-element loops.
 **/
-fn get_elm_ptr(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
+fn get_elm(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
 {
     mutaptr ptr = null;
     clos select_one = [&]<isize I>() inln_clos -> b32 {  // scan the rows
         if (row != I) {
             return false;
         }
-        ptr = mutaptr(get_row_ptr<I>(arr) + col);
+        ptr = mutaptr(get_row<I>(arr) + col);
         return true;
     };
 
@@ -186,7 +115,7 @@ fn get_elm_ptr(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
 template<isize Row>
 fn get_elm(SomeMultiArray auto& arr, isize col) -> TypeAt<Row, typename types_in(arr)>&
 {
-    return get_row_ptr<Row>(arr)[col];
+    return get_row<Row>(arr)[col];
 }
 
 ///////////////////////////////////////////
@@ -375,7 +304,7 @@ fn append(Arr& arr, Ts&&... els) -> ErrorCode
     ErrorCode err = ensure_capacity(arr, arr.len + 1) or_return err;
 
     clos append_one = [&]<isize I>(auto&& elm) inln_clos -> void {
-        get_row_ptr<I>(arr)[arr.len] = forward<declt(elm)>(elm);
+        get_row<I>(arr)[arr.len] = forward<declt(elm)>(elm);
     };
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
@@ -389,7 +318,7 @@ fn append(Arr& arr, Ts&&... els) -> ErrorCode
 ////////////////////////////////////////////
 // Testing
 
-#define CX_TEST_MULTI_ARRAY 1
+// #define CX_TEST_MULTI_ARRAY 1
 #if CX_TEST_MULTI_ARRAY
 
 CX_TEST_DEFINE(multi_array_base)

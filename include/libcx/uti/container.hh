@@ -16,7 +16,7 @@ inline namespace uti {
 
 /** Predicate `true` if `C` is a container with raw erased byte storage. **/
 template<typename C>
-propositio is_erased_container = requires(C c) {
+proposition is_erased_container = requires(C c) {
     where (
         (     is_raw_array<rm_cvref<declt(c.storage)>>
               && same_as<rm_extent<rm_cvref<declt(c.storage)>>, u8>  )

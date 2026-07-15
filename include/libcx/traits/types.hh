@@ -9,103 +9,103 @@ namespace cx {
 
 // Integral
 
-template<typename T> propositio ___is_sintegral = false;
-template<> propositio           ___is_sintegral<char> = true;
-template<> propositio           ___is_sintegral<signed char> = true;
-template<> propositio           ___is_sintegral<wchar_t> = true;
-template<> propositio           ___is_sintegral<short> = true;
-template<> propositio           ___is_sintegral<int> = true;
-template<> propositio           ___is_sintegral<long> = true;
-template<> propositio           ___is_sintegral<long long> = true;
+template<typename T> proposition ___is_sintegral = false;
+template<> proposition           ___is_sintegral<char> = true;
+template<> proposition           ___is_sintegral<signed char> = true;
+template<> proposition           ___is_sintegral<wchar_t> = true;
+template<> proposition           ___is_sintegral<short> = true;
+template<> proposition           ___is_sintegral<int> = true;
+template<> proposition           ___is_sintegral<long> = true;
+template<> proposition           ___is_sintegral<long long> = true;
 #if CX_HAS_INT128
-  template<> propositio         ___is_sintegral<__int128> = true;
+  template<> proposition         ___is_sintegral<__int128> = true;
 #endif
-template<typename T> propositio is_sintegral = ___is_sintegral<rm_cv<T>>;
+template<typename T> proposition is_sintegral = ___is_sintegral<rm_cv<T>>;
 
-template<typename T> propositio ___is_uintegral = false;
-template<> propositio           ___is_uintegral<bool> = true;
-template<> propositio           ___is_uintegral<unsigned char> = true;
+template<typename T> proposition ___is_uintegral = false;
+template<> proposition           ___is_uintegral<bool> = true;
+template<> proposition           ___is_uintegral<unsigned char> = true;
 #if CX_HAS_CHAR8
-  template<> propositio         ___is_uintegral<char8_t> = true;
+  template<> proposition         ___is_uintegral<char8_t> = true;
 #endif
 #if CX_HAS_CHAR16
-  template<> propositio         ___is_uintegral<char16_t> = true;
+  template<> proposition         ___is_uintegral<char16_t> = true;
 #endif
 #if CX_HAS_CHAR32
-  template<> propositio         ___is_uintegral<char32_t> = true;
+  template<> proposition         ___is_uintegral<char32_t> = true;
 #endif
-template<> propositio           ___is_uintegral<unsigned short> = true;
-template<> propositio           ___is_uintegral<unsigned int> = true;
-template<> propositio           ___is_uintegral<unsigned long> = true;
-template<> propositio           ___is_uintegral<unsigned long long> = true;
+template<> proposition           ___is_uintegral<unsigned short> = true;
+template<> proposition           ___is_uintegral<unsigned int> = true;
+template<> proposition           ___is_uintegral<unsigned long> = true;
+template<> proposition           ___is_uintegral<unsigned long long> = true;
 #if CX_HAS_INT128
-  template<> propositio         ___is_uintegral<unsigned __int128> = true;
+  template<> proposition         ___is_uintegral<unsigned __int128> = true;
 #endif
-template<typename T> propositio is_uintegral = ___is_uintegral<rm_cv<T>>;
+template<typename T> proposition is_uintegral = ___is_uintegral<rm_cv<T>>;
 
-template<typename T> propositio is_integral = is_sintegral<T> || is_uintegral<T>;
+template<typename T> proposition is_integral = is_sintegral<T> || is_uintegral<T>;
 
 // Float
 
-template<typename T> propositio ___is_floating = false;
-template<> propositio ___is_floating<float> = true;
-template<> propositio ___is_floating<double> = true;
-template<> propositio ___is_floating<long double> = true;
+template<typename T> proposition ___is_floating = false;
+template<> proposition ___is_floating<float> = true;
+template<> proposition ___is_floating<double> = true;
+template<> proposition ___is_floating<long double> = true;
 #if CX_HAS_FLOAT128
-  template<> propositio ___is_floating<__float128> = true;
+  template<> proposition ___is_floating<__float128> = true;
 #endif
-template<typename T> propositio is_floating = ___is_floating<rm_cv<T>>;
+template<typename T> proposition is_floating = ___is_floating<rm_cv<T>>;
 
 // Raw pointer
 // TODO: is `is_base_ptr` a better name ?
 
-template<typename T> propositio ___is_raw_ptr = false;
-template<typename U> propositio ___is_raw_ptr<U*> = true;
-template<typename T> propositio is_raw_ptr = ___is_raw_ptr<rm_cv<T>>;
+template<typename T> proposition ___is_raw_ptr = false;
+template<typename U> proposition ___is_raw_ptr<U*> = true;
+template<typename T> proposition is_raw_ptr = ___is_raw_ptr<rm_cv<T>>;
 
 template<typename T>
-propositio is_base_ptr = is_raw_ptr<T> && !is_raw_ptr<rm_cv<rm_ptr<rm_cv<T>>>>;
+proposition is_base_ptr = is_raw_ptr<T> && !is_raw_ptr<rm_cv<rm_ptr<rm_cv<T>>>>;
 
 // Arithmetic
 
 template<typename T>
-propositio is_arithmetic = is_integral<T> || is_floating<T> || is_raw_ptr<T>;
+proposition is_arithmetic = is_integral<T> || is_floating<T> || is_raw_ptr<T>;
 
 // Raw array
 
-template<typename T> propositio ___is_raw_array = false;
-template<typename T> propositio ___is_raw_array<T[]> = true;
-template<typename T, usize N> propositio ___is_raw_array<T[N]> = true;
-template<typename T> propositio is_raw_array = ___is_raw_array<rm_cv<T>>;
+template<typename T> proposition ___is_raw_array = false;
+template<typename T> proposition ___is_raw_array<T[]> = true;
+template<typename T, usize N> proposition ___is_raw_array<T[N]> = true;
+template<typename T> proposition is_raw_array = ___is_raw_array<rm_cv<T>>;
 
 // Callables
 
-template<typename T> propositio is_func = !is_ref<T> && !is_const<T const>;
+template<typename T> proposition is_func = !is_ref<T> && !is_const<T const>;
 
 template<typename T>
-propositio is_ptr_to_func = is_raw_ptr<rm_cvref<T>> && is_func<rm_ptr<rm_cvref<T>>>;
+proposition is_ptr_to_func = is_raw_ptr<rm_cvref<T>> && is_func<rm_ptr<rm_cvref<T>>>;
 
 template<typename T>
-propositio is_ref_to_func = is_ref<T> && is_func<rm_cvref<T>>;
+proposition is_ref_to_func = is_ref<T> && is_func<rm_cvref<T>>;
 
 template<typename T>
-propositio is_func_any = is_func<T> || is_ptr_to_func<T> || is_ref_to_func<T>;
+proposition is_func_any = is_func<T> || is_ptr_to_func<T> || is_ref_to_func<T>;
 
 template<typename T>
-propositio is_fntor_type = requires { &rm_cvref<T>::operator(); };  // XXX:
+proposition is_fntor_type = requires { &rm_cvref<T>::operator(); };  // XXX:
 
 template<typename T>
-propositio is_callable = is_func_any<T> || is_fntor_type<T>;
+proposition is_callable = is_func_any<T> || is_fntor_type<T>;
 
 // Void
 
-template<typename T> propositio is_void = false;
-template<> propositio is_void<void> = true;
+template<typename T> proposition is_void = false;
+template<> proposition is_void<void> = true;
 
 // TODO:
-// template<typename T> propositio is_smart_ptr = false;
-// template<typename U> propositio is_smart_ptr<std::shared_ptr<U>> = true;
-// template<typename U, typename D> propositio is_smart_ptr<std::unique_ptr<U, D>> = true;
+// template<typename T> proposition is_smart_ptr = false;
+// template<typename U> proposition is_smart_ptr<std::shared_ptr<U>> = true;
+// template<typename U, typename D> proposition is_smart_ptr<std::unique_ptr<U, D>> = true;
 
 }       // namespace cx
 #endif  // CX_TRAITS_TYPES_HH

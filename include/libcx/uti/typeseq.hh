@@ -43,7 +43,7 @@ onedef cons isize va_size_of = TypeSeq<Ts...>::size;
 CX_CONCEPT_GEN_TEMPL(TypeSeq, is_type_seq, SomeTypeSeq, typename... Ts, Ts...);
 
 template<typename>
-propositio ___always_false = false;
+proposition ___always_false = false;
 
 ////////////////////////////////////////////
 // Homogeneous type sequence
@@ -60,10 +60,10 @@ cons fn ___typeseq_is_homogeneous() -> bool
 }
 
 template<SomeTypeSeq Seq>
-propositio is_homogeneous = ___typeseq_is_homogeneous<Seq>();
+proposition is_homogeneous = ___typeseq_is_homogeneous<Seq>();
 
 template<typename... Ts>
-propositio va_is_homo = is_homogeneous<TypeSeq<Ts...>>;
+proposition va_is_homo = is_homogeneous<TypeSeq<Ts...>>;
 
 ////////////////////////////////////////////
 // Type at a given index in a type sequence

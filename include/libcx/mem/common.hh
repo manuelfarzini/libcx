@@ -27,7 +27,7 @@ static_assert(DEF_ALIGN == 8  || DEF_ALIGN == 16, "`DEF_ALIGN` should be 8 or 16
 
 /** Predicate that is `true` if `Tp` requires more alignment than `max_align_t`. **/
 template<typename Tp>
-propositio is_over_aligned =  align_of(Tp) > align_of(max_align_t);
+proposition is_over_aligned =  align_of(Tp) > align_of(max_align_t);
 
 /**
     Copies `size` bytes from `src` to `dst`.

@@ -8,7 +8,7 @@
 
 namespace cx {
 
-template<bool B> propositio kpred = B;
+template<bool B> proposition kpred = B;
 
 template<usize bit>
 onedef cons usize BIT = 1ull << bit;

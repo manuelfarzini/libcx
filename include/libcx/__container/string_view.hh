@@ -94,9 +94,9 @@ template<typename T, typename S>
 inln onedef cons fn slice(T const* src, S len = -1) noexce -> vstring;
 
 template<typename T>
-propositio is_string_like = requires(T t) { []{ cx::slice(t); }(); };
+proposition is_string_like = requires(T t) { []{ cx::slice(t); }(); };
 
-template<> propositio is_string_like<vstring> = true;
+template<> proposition is_string_like<vstring> = true;
 
 struct StringIter {
     using Size = isize;

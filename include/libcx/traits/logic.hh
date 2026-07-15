@@ -12,17 +12,17 @@ inline namespace uti {
 
 // Operators
 
-template<bool... Bs> propositio bvariand = (Bs && ...);
-template<typename... Ts> propositio tvariand = (Ts::value && ...);
-template<bool... Bs> propositio bvarior = (Bs || ...);
-template<typename... Ts> propositio tvarior = (Ts::value || ...);
+template<bool... Bs> proposition bvariand = (Bs && ...);
+template<typename... Ts> proposition tvariand = (Ts::value && ...);
+template<bool... Bs> proposition bvarior = (Bs || ...);
+template<typename... Ts> proposition tvarior = (Ts::value || ...);
 
 // Assertable
 
 template<typename T> concept ___assertble = is_convertible<T, bool>;
 
 template<typename T>
-propositio is_assertble = ___assertble<T> && requires(T&& t) { { !uti::forward<T>(t) } -> ___assertble; };
+proposition is_assertble = ___assertble<T> && requires(T&& t) { { !uti::forward<T>(t) } -> ___assertble; };
 
 template<typename T> concept Assertble = is_assertble<T>;
 
