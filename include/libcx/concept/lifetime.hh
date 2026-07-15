@@ -19,7 +19,7 @@ template<typename... Ts> concept CpOrMvAsble = (is_cp_or_mv_asble<Ts> && ...);
 template<typename... Ts> concept DefInitble  = (is_def_initble<Ts> && ...);
 template<typename... Ts> concept ZeroInitble = (is_zero_initble<Ts> && ...);
 
-template<typename... Ts> predicate TrivDtble = (is_triv_dtble<Ts> && ...);
+template<typename... Ts> propositio TrivDtble = (is_triv_dtble<Ts> && ...);
 // FIX:(manu): should impose sizeof...(Ts) >= 1 ?
 // static_assert(DefCtble<>); // e.g. this one should work? Now does.
 

@@ -39,8 +39,8 @@ template<typename E, typename... Es>
 StaticArray(E, Es...) -> StaticArray<enable_if<bvariand<same_as<E, Es>...>, E>, 1 + sizeof...(Es)>;
 
 
-template<typename Arr, typename E> predicate is_static_array_of = false;
-template<typename T, isize Cap, typename S> predicate is_static_array_of<StaticArray<T, Cap, S>, T> = true;
+template<typename Arr, typename E> propositio is_static_array_of = false;
+template<typename T, isize Cap, typename S> propositio is_static_array_of<StaticArray<T, Cap, S>, T> = true;
 template<typename Arr, typename E> concept StaticArrayOf = is_static_array_of<Arr, E>;
 
 }       // namespace arr

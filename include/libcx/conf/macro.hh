@@ -84,8 +84,8 @@
 #ifndef cons
     #define cons constexpr
 #endif
-#ifndef predicate
-    #define predicate inline constexpr bool
+#ifndef propositio
+    #define propositio inline constexpr bool
 #endif
 
 #ifndef cast
@@ -530,16 +530,16 @@
 
 #ifndef CX_CONCEPT_GEN
     #define CX_CONCEPT_GEN(TypeName, is_type_name, ConceptName)                  \
-        template<typename T> predicate is_type_name = false;                     \
-        template<> predicate is_type_name<TypeName> = true;                      \
+        template<typename T> propositio is_type_name = false;                     \
+        template<> propositio is_type_name<TypeName> = true;                      \
         template<typename T> concept ConceptName = is_type_name<cx::rm_cvref<T>>
 #endif
 #ifndef CX_CONCEPT_GEN_TEMPL  // use VA_ to pass _<ARGS>_ arguments
     #define CX_CONCEPT_GEN_TEMPL(                                                \
             TypeName, is_type_name, ConceptName, _TPARAMS_, _TARGS_              \
         )                                                                        \
-        template<typename T> predicate is_type_name = false;                     \
-        template<_TPARAMS_> predicate is_type_name<TypeName<_TARGS_>> = true;    \
+        template<typename T> propositio is_type_name = false;                     \
+        template<_TPARAMS_> propositio is_type_name<TypeName<_TARGS_>> = true;    \
         template<typename T> concept ConceptName = is_type_name<cx::rm_cvref<T>>
 #endif
 
@@ -614,7 +614,7 @@
         #undef clos           \
         #undef comp           \
         #undef cons           \
-        #undef predicate      \
+        #undef propositio      \
         #undef cast           \
         #undef nil            \
 #endif

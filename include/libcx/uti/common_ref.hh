@@ -63,7 +63,7 @@ template<typename... Args>
 using common_ref = typename ___common_ref<Args...>::Type;
 
 template<typename T, typename U>
-predicate common_ref_w = same_as<common_ref<T, U>, common_ref<U, T>>
+propositio common_ref_w = same_as<common_ref<T, U>, common_ref<U, T>>
                          && is_convertible<T, common_ref<T, U>>
                          && is_convertible<U, common_ref<T, U>>;
 

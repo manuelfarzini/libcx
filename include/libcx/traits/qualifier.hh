@@ -30,13 +30,13 @@ struct ___copy_cv<const volatile T, U> { using Type = U const volatile; };
 template<typename T, typename U>
 using copy_cv = typename ___copy_cv<T, U>::Type;
 
-template<typename T> predicate is_const = false;
-template<typename T> predicate is_const<T const> = true;
+template<typename T> propositio is_const = false;
+template<typename T> propositio is_const<T const> = true;
 
-template<typename T> predicate is_vola = false;
-template<typename T> predicate is_vola<T volatile> = true;
+template<typename T> propositio is_vola = false;
+template<typename T> propositio is_vola<T volatile> = true;
 
-template<typename T> predicate is_cv_qual = is_const<T> || is_vola<T>;
+template<typename T> propositio is_cv_qual = is_const<T> || is_vola<T>;
 
 // Reference
 
@@ -51,7 +51,7 @@ template<typename T> using lref = T&;
 template<typename T> using rref = T&&;
 
 template<typename T> 
-predicate ___is_refble = requires { typename lref<T>; };
+propositio ___is_refble = requires { typename lref<T>; };
 
 template<typename T, bool = ___is_refble<T>> 
 struct ___add_rref { using Type = T; };
@@ -71,11 +71,11 @@ struct ___add_lref<T, true> { using Type = lref<T>; };
 template<typename T>
 using add_lref = typename ___add_lref<T>::Type;
 
-template<typename T> predicate is_lref = false;
-template<typename T> predicate is_lref<T&> = true;
-template<typename T> predicate is_rref = false;
-template<typename T> predicate is_rref<T&&> = true;
-template<typename T> predicate is_ref = is_lref<T> || is_rref<T>;
+template<typename T> propositio is_lref = false;
+template<typename T> propositio is_lref<T&> = true;
+template<typename T> propositio is_rref = false;
+template<typename T> propositio is_rref<T&&> = true;
+template<typename T> propositio is_ref = is_lref<T> || is_rref<T>;
 
 template<typename T> struct ___mk_lref { using Type = rm_ref<T>&; };
 template<typename T> using mk_lref = typename ___mk_lref<T>::Type;
