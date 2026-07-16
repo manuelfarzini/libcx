@@ -114,11 +114,11 @@
 ////////////////////////////////////////////
 // Attributes and decorators
 
-#ifndef CX_HIDE_FROM_ABI
+#ifndef CX_HIDE
     #if CX_COMPILER_MSVC
-        #define CX_HIDE_FROM_ABI
+        #define CX_HIDE
     #else
-        #define CX_HIDE_FROM_ABI __attribute__((__visibility__("hidden")))
+        #define CX_HIDE __attribute__((__visibility__("hidden")))
     #endif
 #endif
 

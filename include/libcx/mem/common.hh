@@ -9,8 +9,16 @@
 #include "libcx/uti/ownership.hh"
 #include "libcx/uti/tuple.hh"
 
-CX_HIDE_FROM_ABI nodisc cons fn operator new(usize, mutaptr __p) noexce -> mutaptr { return __p; }
-CX_HIDE_FROM_ABI        cons fn operator delete(mutaptr, mutaptr)  noexce -> void  {             }
+#ifndef CX_ENABLE_PLACEMENT
+    #define CX_ENABLE_PLACEMENT 0
+#endif
+
+#if CX_ENABLE_PLACEMENT
+
+CX_HIDE nodisc cons fn operator new(usize, mutaptr __p) noexce -> mutaptr { return __p; }
+CX_HIDE        cons fn operator delete(mutaptr, mutaptr)  noexce -> void  {             }
+
+#endif
 
 namespace cx {
 inline namespace mem {
