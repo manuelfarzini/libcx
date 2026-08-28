@@ -12,33 +12,14 @@
 #ifndef CX_MEM_MULTI_HH
 #define CX_MEM_MULTI_HH
 
-#include "libcx/uti/typeseq.hh"
+#include "libcx/arr/static_array.hh"
+#include "libcx/math/math.hh"
 #include "libcx/mem/common.hh"
 #include "libcx/mem/allocator.hh"
-#include "libcx/arr/static_array.hh"
+#include "libcx/uti/typeseq.hh"
 
 namespace cx {
 inline namespace mem {
-
-/** Computes the maximum value in `head` and `rest`. **/
-template<typename Head, typename... Rest>
-inln cons fn max(Head head, Rest... rest) noexce -> Head
-    where (va_size_of<Rest...> > 0 && va_is_homo<Head, Rest...> && size_of(Head) <= 8)
-{
-    Head max = head;
-    ((max = max < rest ? rest : max), ...);
-    return max;
-}
-
-/** Computes the maximum element in `head` and `rest`. **/
-template<typename Head, typename... Rest>
-inln cons fn max(Head& head, Rest&... rest) noexce -> Head&
-    where (va_size_of<Rest...> > 0 && va_is_homo<Head, Rest...> && size_of(Head) > 8)
-{
-    Head const* max = &head;
-    ((max = *max < rest ? &rest : max), ...);
-    return *max;
-}
 
 ////////////////////////////////////////////
 // Utilities
@@ -373,7 +354,7 @@ fn multi_make(
     u32           flags  =  AllocFlags_Default
 ) noexce -> Res<mutaptr, ErrorCode> {
     // TODO:(manu) checks
-    auto [ptr, err] = multi_aligned_alloc<Ts...>(alc, va_size_of<Ts...>, align, flags)
+    auto [ptr, err] = multi_aligned_alloc<Ts...>(alc, cx__va_size_of<Ts...>, align, flags)
         or_return {null, err};
     return multi_init_ls<Ts...>(ptr, lists...);
 }

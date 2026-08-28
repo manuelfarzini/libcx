@@ -9,11 +9,11 @@ namespace cx {
 
 // Comparison
 
-template<typename T, typename U> proposition ___same_as = false;
-template<typename T> proposition ___same_as<T, T> = true;
-template<typename T, typename U> proposition same_as = ___same_as<T, U>;
+template<typename T, typename U> proposition cx__same_as = false;
+template<typename T> proposition cx__same_as<T, T> = true;
+template<typename T, typename U> proposition same_as = cx__same_as<T, U>;
 
-template<typename T, typename... Ts> proposition one_of = (___same_as<T, Ts> || ...);
+template<typename T, typename... Ts> proposition one_of = (cx__same_as<T, Ts> || ...);
 
 // NOTE(manu) the taparam `T` must be a plain type (not cvref) in order to work as intended
 template<typename T, typename U> proposition same_or_cv = same_as<T, rm_cv<U>>;

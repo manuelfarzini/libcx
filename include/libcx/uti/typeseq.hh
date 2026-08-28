@@ -38,7 +38,8 @@ struct TypeSeq<H, Rs...> {
 };
 
 template<typename... Ts>
-onedef cons isize va_size_of = TypeSeq<Ts...>::size;
+onedef cons isize cx__va_size_of = TypeSeq<Ts...>::size;
+#define va_size_of(_PACK_) cx__va_size_of<_PACK_...>
 
 CX_CONCEPT_GEN_TEMPL(TypeSeq, is_type_seq, SomeTypeSeq, typename... Ts, Ts...);
 
@@ -49,18 +50,18 @@ proposition ___always_false = false;
 // Homogeneous type sequence
 
 template<SomeTypeSeq Seq>
-cons fn ___typeseq_is_homogeneous() -> bool
+cons fn cx__typeseq_is_homogeneous() -> bool
 {
     if constexpr (Seq::empty || Seq::Rest::empty) {
         return true;
     } else { // XXX: or cvref ???
         return same_as<typename Seq::Head, typename Seq::Rest::Head>
-               && ___typeseq_is_homogeneous<typename Seq::Rest>();
+               && cx__typeseq_is_homogeneous<typename Seq::Rest>();
     }
 }
 
 template<SomeTypeSeq Seq>
-proposition is_homogeneous = ___typeseq_is_homogeneous<Seq>();
+proposition is_homogeneous = cx__typeseq_is_homogeneous<Seq>();
 
 template<typename... Ts>
 proposition va_is_homo = is_homogeneous<TypeSeq<Ts...>>;
