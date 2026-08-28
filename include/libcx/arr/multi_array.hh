@@ -34,24 +34,24 @@ inline namespace arr {
     @nota
     - Runtime row access is supported, but it is intended as a fallback path.
 **/
-template<SomeAllocator A, PlainZeroInitble... Ts> requires (va_size_of<Ts...> > 1)
-struct MultiArray {
+template<SomeAllocator A, PlainZeroInitble... Ts> requires (va_size(Ts) > 1)
+struct Soa {
     using Types = TypeSeq<Ts...>;
-    using Self = MultiArray<A, Ts...>;
+    using Self = Soa<A, Ts...>;
     using Alc = A;
     onedef glob cons isize rows = sizeof...(Ts);
     onedef glob cons StaticArray<isize, rows> sizes{size_of(Ts)...};
     onedef glob cons StaticArray<isize, rows> aligns{align_of(Ts)...};
 
     Tuple<Ts*...> ptrs;
-    isize len{};
-    isize cap{};
-    Alc alc{};  // TODO: handle initialization
+    isize         len{};
+    isize         cap{};
+    Alc           alc{};  // TODO: handle initialization (with make_soa)
 };
 
-CX_CONCEPT_GEN_TEMPL(MultiArray, is_multi_array, SomeMultiArray, 
+CX_CONCEPT_GEN_TEMPL(Soa, is_multi_array, SomeSoa, 
                      VA_(SomeAllocator A, typename... Ts), VA_(A, Ts...));
-#define Multi_Array cx::arr::SomeMultiArray auto
+#define Some_Soa cx::arr::SomeSoa auto
 
 ///////////////////////////////////////////
 // Base operations
@@ -64,7 +64,7 @@ CX_CONCEPT_GEN_TEMPL(MultiArray, is_multi_array, SomeMultiArray,
     - The typed pointer to row `Row`.
 **/
 template<isize Row>
-fn get_row(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
+fn get_row(SomeSoa auto& arr) -> TypeAt<Row, typename types_in(arr)>*
 {
     return get<Row>(arr.ptrs);
 }
@@ -84,7 +84,7 @@ fn get_row(SomeMultiArray auto& arr) -> TypeAt<Row, typename types_in(arr)>*
     - Runtime row access is dispatched over the typed tuple rows.
     - Intended for rare dynamic access, not for hot per-element loops.
 **/
-fn get_elm(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
+fn get_elm(SomeSoa auto& arr, isize row, isize col) -> mutaptr
 {
     mutaptr ptr = null;
     clos select_one = [&]<isize I>() inln_clos -> b32 {  // scan the rows
@@ -113,7 +113,7 @@ fn get_elm(SomeMultiArray auto& arr, isize row, isize col) -> mutaptr
     - `col` is a valid column index.
 **/
 template<isize Row>
-fn get_elm(SomeMultiArray auto& arr, isize col) -> TypeAt<Row, typename types_in(arr)>&
+fn get_elm(SomeSoa auto& arr, isize col) -> TypeAt<Row, typename types_in(arr)>&
 {
     return get_row<Row>(arr)[col];
 }
@@ -130,7 +130,7 @@ fn get_elm(SomeMultiArray auto& arr, isize col) -> TypeAt<Row, typename types_in
     - The generated `ErrorCode` if any, `null` otherwise.
 **/
 template<PlainZeroInitble... Ts>
-fn reserve(MultiArray<HeapAllocator, Ts...>& arr, isize wanted_cap) -> ErrorCode
+fn reserve(Soa<HeapAllocator, Ts...>& arr, isize wanted_cap) -> ErrorCode
 {
     if (wanted_cap <= arr.cap) {
         return null;
@@ -149,7 +149,7 @@ fn reserve(MultiArray<HeapAllocator, Ts...>& arr, isize wanted_cap) -> ErrorCode
     - The capacity grows by repeated doubling.
 **/
 template<PlainZeroInitble... Ts>
-fn ensure_capacity(MultiArray<HeapAllocator, Ts...>& arr, isize req_len) -> ErrorCode
+fn ensure_capacity(Soa<HeapAllocator, Ts...>& arr, isize req_len) -> ErrorCode
 {
     if (req_len <= arr.cap) {
         return null;
@@ -176,10 +176,10 @@ fn ensure_capacity(MultiArray<HeapAllocator, Ts...>& arr, isize req_len) -> Erro
 **/
 template<PlainZeroInitble... Ts>
 fn alloc(
-    MultiArray<HeapAllocator, Ts...>&    arr,
-    isize                                new_cap,
-    isize                                align     =  DEF_ALIGN,
-    u32                                  flags     =  AllocFlags_Default
+    Soa<HeapAllocator, Ts...>&  arr,
+    isize                       new_cap,
+    isize                       align    =  DEF_ALIGN,
+    u32                         flags    =  AllocFlags_Default
 ) -> ErrorCode {
     isize ALIGN = max(align, multi_align_of<Ts...>());
     isize SIZE  = multi_size_of<Ts...>(new_cap);
@@ -222,10 +222,10 @@ fn alloc(
 **/
 template<PlainZeroInitble... Ts>
 fn resize(
-    MultiArray<HeapAllocator, Ts...>&    arr,
-    isize                                new_cap,
-    isize                                align     =  DEF_ALIGN,
-    u32                                  flags     =  AllocFlags_Default
+    Soa<HeapAllocator, Ts...>&  arr,
+    isize                       new_cap,
+    isize                       align    =  DEF_ALIGN,
+    u32                         flags    =  AllocFlags_Default
 ) -> ErrorCode {
     cx_assume(arr.cap <= new_cap);
     cx_assume(arr.len <= new_cap);
@@ -271,7 +271,7 @@ fn resize(
     - Clears all typed row pointers and resets length/capacity.
 **/
 template<PlainZeroInitble... Ts>
-fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
+fn free(Soa<HeapAllocator, Ts...>& arr) -> ErrorCode
 {
     mutaptr ptr = base_ptr(arr);
     ErrorCode err = aligned_free(arr.alc, ptr) or_return err;
@@ -282,7 +282,7 @@ fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
 
     [&]<isize... I>(IndexSeq<I...>) inln_clos -> void {
         (clear_one.template operator()<I>(), ...);
-    }(index_seq<MultiArray<HeapAllocator, Ts...>::rows>{});
+    }(index_seq<Soa<HeapAllocator, Ts...>::rows>{});
 
     arr.len = 0;
     arr.cap = 0;
@@ -297,7 +297,7 @@ fn free(MultiArray<HeapAllocator, Ts...>& arr) -> ErrorCode
     @ret
     - The generated `ErrorCode` if any, `null` otherwise.
 **/
-template<SomeMultiArray Arr, typename... Ts>
+template<SomeSoa Arr, typename... Ts>
 fn append(Arr& arr, Ts&&... els) -> ErrorCode
     where (multi_same_or_ref<typename Arr::Types, TypeSeq<Ts...>>)
 {

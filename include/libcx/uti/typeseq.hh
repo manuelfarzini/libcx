@@ -37,79 +37,78 @@ struct TypeSeq<H, Rs...> {
     onedef glob cons isize size = 1 + sizeof...(Rs);
 };
 
-template<typename... Ts>
-onedef cons isize cx__va_size_of = TypeSeq<Ts...>::size;
-#define va_size_of(_PACK_) cx__va_size_of<_PACK_...>
-
 CX_CONCEPT_GEN_TEMPL(TypeSeq, is_type_seq, SomeTypeSeq, typename... Ts, Ts...);
 
+template<typename... Ts>
+onedef cons isize size_of_tseq = TypeSeq<Ts...>::size;
+
 template<typename>
-proposition ___always_false = false;
+proposition cx__always_false = false; // TODO: to be moved
 
 ////////////////////////////////////////////
 // Homogeneous type sequence
 
 template<SomeTypeSeq Seq>
-cons fn cx__typeseq_is_homogeneous() -> bool
+cons fn cx__tseq_is_homo() -> bool
 {
     if constexpr (Seq::empty || Seq::Rest::empty) {
         return true;
     } else { // XXX: or cvref ???
         return same_as<typename Seq::Head, typename Seq::Rest::Head>
-               && cx__typeseq_is_homogeneous<typename Seq::Rest>();
+               && cx__tseq_is_homo<typename Seq::Rest>();
     }
 }
 
 template<SomeTypeSeq Seq>
-proposition is_homogeneous = cx__typeseq_is_homogeneous<Seq>();
+proposition tseq_is_homo = cx__tseq_is_homo<Seq>();
 
 template<typename... Ts>
-proposition va_is_homo = is_homogeneous<TypeSeq<Ts...>>;
+proposition va_is_homo = tseq_is_homo<TypeSeq<Ts...>>;
 
 ////////////////////////////////////////////
 // Type at a given index in a type sequence
 
 template<isize Idx, SomeTypeSeq Seq, bool Empty = Seq::empty>
-struct ___TypeAt;
+struct cxTypeAt;
 
 template<isize Idx, SomeTypeSeq Seq>
-struct ___TypeAt<Idx, Seq, false>
-    : ___TypeAt<Idx - 1, typename Seq::Rest> {};
+struct cxTypeAt<Idx, Seq, false>
+    : cxTypeAt<Idx - 1, typename Seq::Rest> {};
 
 template<SomeTypeSeq Seq>
-struct ___TypeAt<0, Seq, false> {
+struct cxTypeAt<0, Seq, false> {
     using Type = typename Seq::Head;
 };
 
 template<isize Idx, SomeTypeSeq Seq>
-struct ___TypeAt<Idx, Seq, true> {
-    static_assert(___always_false<Seq>, "TypeAt index out of range");
+struct cxTypeAt<Idx, Seq, true> {
+    static_assert(cx__always_false<Seq>, "TypeAt index out of range");
 };
 
 template<isize Idx, SomeTypeSeq Seq>
-using TypeAt = typename ___TypeAt<Idx, Seq>::Type;
+using TypeAt = typename cxTypeAt<Idx, Seq>::Type;
 
 template<isize Idx, typename... Ts>
-using TypeAtVA = TypeAt<Idx, TypeSeq<Ts...>>;
+using TypeAtVa = TypeAt<Idx, TypeSeq<Ts...>>;
 
 ////////////////////////////////////////////
 // Index of a given type in a type sequence
 
 template<typename T, SomeTypeSeq Seq>
-comp fn ___type_idx_of() -> isize
+comp fn cx__type_idx_of() -> isize
 {
     if constexpr (Seq::empty) {
-        static_assert(___always_false<T>, "type_idx type not found in TypeSeq");
+        static_assert(cx__always_false<T>, "type_idx type not found in TypeSeq");
         return isize{0};
     } else if constexpr (same_as<T, typename Seq::Head>) {
         return isize{0};
     } else {
-        return isize{1} + ___type_idx_of<T, typename Seq::Rest>();
+        return isize{1} + cx__type_idx_of<T, typename Seq::Rest>();
     }
 }
 
 template<typename T, SomeTypeSeq Seq>
-onedef cons isize type_idx = ___type_idx_of<T, Seq>();
+onedef cons isize type_idx = cx__type_idx_of<T, Seq>();
 
 ////////////////////////////////////////////
 // Integer sequence
@@ -117,22 +116,22 @@ onedef cons isize type_idx = ___type_idx_of<T, Seq>();
 template<SomeIntegral Int, Int... Is>
 struct IntegerSeq {
     using Elem = Int;
-    glob onedef cons isize size = sizeof...(Is);
+    onedef glob cons isize size = sizeof...(Is);
 };
 
-CX_CONCEPT_GEN_TEMPL(IntegerSeq, is_integer_seq, CIntegerSeq,
+CX_CONCEPT_GEN_TEMPL(IntegerSeq, is_integer_seq, SomeIntegerSeq,
                      VA_(SomeIntegral Int, Int... Is), VA_(Int, Is...));
 
 template<SomeIntegral Int, isize N, isize... Is>
-struct ___integer_seq : ___integer_seq<Int, N - 1, N - 1, Is...> {};
+struct cx__integer_seq : cx__integer_seq<Int, N - 1, N - 1, Is...> {};
 
 template<SomeIntegral Int, isize... Is>
-struct ___integer_seq<Int, isize{0}, Is...> {
+struct cx__integer_seq<Int, isize{0}, Is...> {
     using Type = IntegerSeq<Int, Int{Is}...>;
 };
 
 template<SomeIntegral Int, isize N>
-using integer_seq = typename ___integer_seq<Int, N>::Type;
+using integer_seq = typename cx__integer_seq<Int, N>::Type;
 
 template<SomeIntegral Int, typename... Ts>
 using integer_seq_va = integer_seq<Int, isize{sizeof...(Ts)}>;

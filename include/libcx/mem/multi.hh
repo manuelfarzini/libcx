@@ -354,7 +354,7 @@ fn multi_make(
     u32           flags  =  AllocFlags_Default
 ) noexce -> Res<mutaptr, ErrorCode> {
     // TODO:(manu) checks
-    auto [ptr, err] = multi_aligned_alloc<Ts...>(alc, cx__va_size_of<Ts...>, align, flags)
+    auto [ptr, err] = multi_aligned_alloc<Ts...>(alc, va_size(Ts), align, flags)
         or_return {null, err};
     return multi_init_ls<Ts...>(ptr, lists...);
 }

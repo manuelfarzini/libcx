@@ -347,7 +347,7 @@ ALIGNED_FREE(aligned_free, ArenaAllocator)
     return Alloc_Invalid_Mode;
 }
 
-// NOTE(manu) Actually super basic version, should implement virtual mem allocator too.
+// NOTE:(manu) Actually super basic version, should implement virtual mem allocator too.
 ALIGNED_ALLOC(aligned_alloc, ArenaAllocator)
 {
     byteptr old_ptr = ptr_add(alc.arena.data, alc.arena.curr_off);

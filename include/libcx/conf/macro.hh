@@ -254,6 +254,9 @@
 #ifndef size_of
     #define size_of(...) (isize(sizeof(__VA_ARGS__)))
 #endif
+#ifndef va_size
+    #define va_size(PACK) (isize(sizeof...(PACK)))
+#endif
 #ifndef offset_of
     #define offset_of(T, elem) (cast(isize) & ((cast(T*) 0)->elem))
 #endif

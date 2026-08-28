@@ -12,7 +12,7 @@ inline namespace math {
 /** Computes the maximum value. **/
 template<typename Head, typename... Rest>
 inln cons fn max(Head head, Rest... rest) noexce -> Head where(
-    va_size_of(Rest) > 0 && va_is_homo<Head, Rest...> && size_of(Head) <= 8
+    va_size(Rest) > 0 && va_is_homo<Head, Rest...> && size_of(Head) <= 8
 )
 {
     Head max = head;
@@ -23,7 +23,7 @@ inln cons fn max(Head head, Rest... rest) noexce -> Head where(
 /** Computes the maximum value. **/
 template<typename Head, typename... Rest>
 inln cons fn max(Head& head, Rest&... rest) noexce -> Head&
-    where (va_size_of(Rest) > 0 && va_is_homo<Head, Rest...> && size_of(Head) > 8)
+    where (va_size(Rest) > 0 && va_is_homo<Head, Rest...> && size_of(Head) > 8)
 {
     Head const* max = &head;
     ((max = *max < rest ? &rest : max), ...);
