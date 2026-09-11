@@ -16,7 +16,8 @@ namespace cx {
 inline namespace arr {
 
 template<ZeroInitble E, SomeAllocator A = HeapAllocator, typename S = isize>
-struct DynamicArray {
+struct DynamicArray
+{
     CX_DEFINE_MEMBER_TYPES(E, S);
     using Alc = A;
     using Self = DynamicArray<E, A, S>;
@@ -52,14 +53,14 @@ CX_CONCEPT_GEN_TEMPL(
     VA_(typename E, SomeAllocator A, typename S), VA_(E, A, S)
 );
 
-template<typename T, typename E> proposition is_array_of = false;
+template<typename T, typename E>                  proposition is_array_of = false;
 template<typename T, typename S, SomeAllocator A> proposition is_array_of<DynamicArray<T, S, A>, T> = true;
-template<typename Arr, typename E> concept SomeArrayOf = is_array_of<Arr, E>;
+template<typename Arr, typename E>                concept SomeArrayOf = is_array_of<Arr, E>;
 
 /** Equality operator. **/
-cons fn operator==(
-    SomeDynamicArray auto const& a, SomeDynamicArray auto const& b
-) noexce->bool {
+cons fn
+operator==(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce -> bool
+{
     if (&a == &b) {
         return true;
     }
@@ -78,7 +79,7 @@ cons fn operator==(
 
 /** Comparison operator. **/
 cons fn
-operator<=>(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce->i8
+operator<=>(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce -> i8
 {
     if (a.len < b.len) {
         return -1;

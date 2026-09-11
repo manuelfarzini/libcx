@@ -3,7 +3,7 @@
 #ifndef CX_TRAITS_LIFETIME_HH
 #define CX_TRAITS_LIFETIME_HH
 
-#include <libcx/traits/qualifier.hh>
+#include "libcx/traits/qualifier.hh"
 
 namespace cx {
 inline namespace uti {

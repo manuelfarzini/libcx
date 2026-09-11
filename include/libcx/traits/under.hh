@@ -1,6 +1,7 @@
 #ifndef CX_TRAITS_UNDER_HH
 #define CX_TRAITS_UNDER_HH
-#include <libcx/conf/hal.hh>
+
+#include "libcx/conf/hal.hh"
 
 template<isize bytes> struct ___BytesToSint {};
 template<> struct ___BytesToSint<1> { using T = i8; };

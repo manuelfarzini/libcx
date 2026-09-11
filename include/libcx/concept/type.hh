@@ -26,8 +26,6 @@ concept SomePlainRawPointer = SomeRawPointer<T> && !is_cv_qual<T> && !is_cv_qual
 
 template<typename T> concept PlainZeroInitble = is_zero_initble<T> && !is_cv_qual<T>;
 
-template<typename T, typename U> concept SameAs = same_as<T, U>;
-
 }       // namespace cx
 }       // namespace uti
 #endif  // CX_CONCEPTS_TYPES_HH
