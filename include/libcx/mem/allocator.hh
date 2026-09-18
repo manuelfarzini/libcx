@@ -24,13 +24,13 @@ onedef cons u32 AllocFlags_Default = AllocFlags_Zero;
 
 template<typename Alc>
 concept SomeAllocator = requires(
-    Alc&       alc,
-    mutaptr    old_ptr,
-    isize      old_size,
-    isize      new_size,
-    isize      old_align,
-    isize      new_align,
-    u32        flags
+    Alc&     alc,
+    mutaptr  old_ptr,
+    isize    old_size,
+    isize    new_size,
+    isize    old_align,
+    isize    new_align,
+    u32      flags
 ) {
     { aligned_alloc(alc, new_size, new_align, flags) }
     noexce -> SameAs<Res<mutaptr, ErrorCode>>;
@@ -39,6 +39,8 @@ concept SomeAllocator = requires(
     noexce -> SameAs<Res<mutaptr, ErrorCode>>;
 
     { aligned_free(alc, old_ptr) } noexce -> SameAs<ErrorCode>;
+
+    // { aligned_free_all(alc, old_ptr) } noexce -> SameAs<ErrorCode>;
 };
 
 ////////////////////////////////////////////
@@ -46,23 +48,23 @@ concept SomeAllocator = requires(
 
 // Static allocator interface.
 
-#define ALIGNED_ALLOC(name, Alc)              \
-    cons fn name(                             \
-        Alc&     alc,                         \
-        isize    size,                        \
-        isize    align  =  DEF_ALIGN,         \
-        u32      flags  =  AllocFlags_Default \
+#define ALIGNED_ALLOC(name, Alc)            \
+    cons fn name(                           \
+        Alc&   alc,                         \
+        isize  size,                        \
+        isize  align  =  DEF_ALIGN,         \
+        u32    flags  =  AllocFlags_Default \
     ) noexce -> Res<mutaptr, ErrorCode>
 
-#define ALIGNED_RESIZE(name, Alc)                   \
-    cons fn name(                                   \
-        Alc&       alc,                             \
-        mutaptr    old_ptr,                         \
-        isize      old_size,                        \
-        isize      new_size,                        \
-        isize      old_align  =  DEF_ALIGN,         \
-        isize      new_align  =  DEF_ALIGN,         \
-        u32        flags      =  AllocFlags_Default \
+#define ALIGNED_RESIZE(name, Alc)                 \
+    cons fn name(                                 \
+        Alc&     alc,                             \
+        mutaptr  old_ptr,                         \
+        isize    old_size,                        \
+        isize    new_size,                        \
+        isize    old_align  =  DEF_ALIGN,         \
+        isize    new_align  =  DEF_ALIGN,         \
+        u32      flags      =  AllocFlags_Default \
     ) noexce -> Res<mutaptr, ErrorCode>
 
 #define ALIGNED_FREE(name, Alc) \
@@ -72,23 +74,23 @@ concept SomeAllocator = requires(
 
 // Runtime allocator interface.
 
-#define ALIGNED_ALLOC_VIEW(name)                \
-    fn name(                                    \
-        mutaptr    alc,                         \
-        isize      size,                        \
-        isize      align  =  DEF_ALIGN,         \
-        u32        flags  =  AllocFlags_Default \
+#define ALIGNED_ALLOC_VIEW(name)              \
+    fn name(                                  \
+        mutaptr  alc,                         \
+        isize    size,                        \
+        isize    align  =  DEF_ALIGN,         \
+        u32      flags  =  AllocFlags_Default \
     ) noexce -> Res<mutaptr, ErrorCode>
 
-#define ALIGNED_RESIZE_VIEW(name)                   \
-    fn name(                                        \
-        mutaptr    alc,                             \
-        mutaptr    old_ptr,                         \
-        isize      old_size,                        \
-        isize      new_size,                        \
-        isize      old_align  =  DEF_ALIGN,         \
-        isize      new_align  =  DEF_ALIGN,         \
-        u32        flags      =  AllocFlags_Default \
+#define ALIGNED_RESIZE_VIEW(name)                 \
+    fn name(                                      \
+        mutaptr  alc,                             \
+        mutaptr  old_ptr,                         \
+        isize    old_size,                        \
+        isize    new_size,                        \
+        isize    old_align  =  DEF_ALIGN,         \
+        isize    new_align  =  DEF_ALIGN,         \
+        u32      flags      =  AllocFlags_Default \
     ) noexce -> Res<mutaptr, ErrorCode>
 
 #define ALIGNED_FREE_VIEW(name)  \
@@ -106,25 +108,27 @@ using AlignedFreeView = func(
 ) noexce -> ErrorCode;
 
 using AlignedAllocView = func( 
-    mutaptr    data,
-    isize     size,
-    isize     align,
-    u32       flags
+    mutaptr  data,
+    isize    size,
+    isize    align,
+    u32      flags
 ) noexce -> Res<mutaptr, ErrorCode>;
 
 using AlignedResizeView = func(
-    mutaptr    data, 
-    mutaptr    old_ptr,
-    isize     new_size,
-    isize     old_size,
-    isize     new_align,
-    isize     old_align,
-    u32       flags
+    mutaptr  data, 
+    mutaptr  old_ptr,
+    isize    new_size,
+    isize    old_size,
+    isize    new_align,
+    isize    old_align,
+    u32      flags
 ) noexce -> Res<mutaptr, ErrorCode>;
+
+//  fn DoSomethingHuge(Alc: allocator_view_t) -> error_code_t;
 
 struct AllocatorView
 {
-    mutaptr              data;
+    mutaptr             data;
     AlignedAllocView*   alloc;
     AlignedResizeView*  resize;
     AlignedFreeView*    free;
@@ -179,7 +183,9 @@ nodisc fn allocator_view(Alc& alc) noexce -> AllocatorView
 ///////////////////////////////////////////
 // Heap allocator definition
 
-struct HeapAllocator {};
+struct HeapAllocator
+{
+};
 
 glob HeapAllocator HEAP_ALLOCATOR{};
 comp fn heap_allocator() noexce -> HeapAllocator& { return HEAP_ALLOCATOR; }
@@ -314,11 +320,12 @@ cons fn aligned_alloc_type(HeapAllocator alc, isize num) -> Res<T*, ErrorCode>
 ////////////////////////////////////////////
 // Arena allocator definition
 
-struct Arena {
-    byteptr  data      {};
-    isize    data_cap  {};
-    isize    curr_off  {};
-    isize    prev_off  {};
+struct Arena
+{
+    byteptr  data{};
+    isize    data_cap{};
+    isize    curr_off{};
+    isize    prev_off{};
 };
 
 struct ArenaAllocator { Arena& arena; };
