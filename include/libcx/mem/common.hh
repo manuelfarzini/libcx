@@ -131,11 +131,12 @@ cons fn mem_take(T* dst, T const* src, isize num) noexce -> void where (not is_v
 **/
 cons fn mem_set(mutaptr data, u8 val, isize size) -> ErrorCode
 {
-    // NOTE(manu)
-    // - libc wrapper, actually is the fastest
-    // - found that is the fastest on my m1 macbook pro
-    //   since it is implemented in arm64 asm
-    // - maybe on other platoforms I should use another version
+    // NOTE:(manu)
+    //  - libc wrapper, actually is the fastest
+    //  - found that is the fastest on my m1 macbook pro
+    //    since it is implemented in arm64 asm
+    //  - maybe on other platoforms I should use another version
+    //  XXX:(manu) should I wrap directly the os calls?
 
     // #if defined(CX_SYSTEM_OSX)
         mutaptr res = ::memset(data, val, size);
