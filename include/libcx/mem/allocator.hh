@@ -104,15 +104,15 @@ fn heap_allocator_proc(
     switch (mode) {
     case AllocMode_Alloc:
         return heap_aligned_alloc(size, align, null, 0, flags & AllocFlag_Zero);
-    case AllocMode_Free:
-        heap_aligned_free(old_ptr);
-        return {null, Error_None};
     case AllocMode_Resize:
         return heap_aligned_resize(old_ptr, old_size, size, align, flags & AllocFlag_Zero);
+    case AllocMode_Free:
+        heap_aligned_free(old_ptr);
+        return {null, none};
     case AllocMode_FreeAll:
-        return {null, Error_None};
+        return {old_ptr, Alloc_InvalidMode};
     }
-    return {null, Alloc_Invalid_Mode};
+    cx_unreachable;
 }
 
 inln fn heap_allocator() noexce -> Allocator
@@ -190,7 +190,7 @@ fn arena_allocator_proc(
     uptr aligned = align_up(uptr(base), align);
     isize offset = isize(aligned - uptr(arena.data));
     if (offset > arena.cap || size > arena.cap - offset) {
-        return {null, Alloc_Exhausted};
+        return {null, Alloc_ExhaustedMem};
     }
     mutaptr ptr = arena.data + offset;
     arena.pos = offset + size;

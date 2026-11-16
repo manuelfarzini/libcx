@@ -73,7 +73,7 @@ nodisc cons fn heap_aligned_alloc(
     if (alloced_mem == null) {
         heap_aligned_free(old_ptr);
         heap_aligned_free(alloced_mem);
-        return {null, Alloc_Exhausted};
+        return {null, Alloc_ExhaustedMem};
     }
 
     mutaptr aligned_mem = ptr_add(alloced_mem, PTR_SIZE);

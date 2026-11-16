@@ -240,7 +240,7 @@ ALIGNED_ALLOC(aligned_alloc, HeapAllocator) {
     isize space = PTR_SIZE + (align - 1) + size;
     mutaptr alloced_mem = heap_alloc(space, flags);
     if (alloced_mem == null) {
-        return {null, Alloc_Exhausted};
+        return {null, Alloc_ExhaustedMem};
     }
 
     mutaptr aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), align);
@@ -272,7 +272,7 @@ ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
     if (new_align < DEF_ALIGN) {
         new_align = DEF_ALIGN;
     }
-    // assert(is_power_of_two(new_align) && "`new_align` must be a power of 2");
+    // cx_assert(is_power_of_two(new_align) && "`new_align` must be a power of 2");
 
     mutaptr alloced_mem = null;
     mutaptr aligned_mem = null;
@@ -282,7 +282,7 @@ ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
     if (force_copy) {
         alloced_mem = heap_alloc(space, AllocFlags_None);
         if (alloced_mem == null) {
-            return {null, Alloc_Exhausted};
+            return {null, Alloc_ExhaustedMem};
         }
         aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), new_align);
         (cast(void** ,aligned_mem))[-1] = alloced_mem;
@@ -293,16 +293,18 @@ ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
         mutaptr base_ptr = cast(void** ,old_ptr)[-1];
         alloced_mem = heap_resize(base_ptr, space);
         if (alloced_mem == null) {
-            return {null, Alloc_Exhausted};
+            return {null, Alloc_ExhaustedMem};
         }
         aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), new_align);
         (cast(void** ,aligned_mem))[-1] = alloced_mem;
     }
 
     if ((flags & AllocFlags_Zero) && (new_size > old_size)) {
+        // NOTE:(manu)
         // actually using std malloc and realloc, not os specific primitives, so
         // the new_region should be zeroed in windows too
         mutaptr new_region = ptr_add(aligned_mem, old_size);
+        // NOTE:(manu)
         // if not dealing with vm paging plain mem_zero is faster than conditional
         mem_zero(new_region, new_size - old_size);
     }
@@ -351,7 +353,7 @@ ALIGNED_FREE(aligned_free, ArenaAllocator)
 {
     cx_unused(alc);
     cx_unused(ptr);
-    return Alloc_Invalid_Mode;
+    return Alloc_InvalidMode;
 }
 
 // NOTE:(manu) Actually super basic version, should implement virtual mem allocator too.
@@ -368,7 +370,7 @@ ALIGNED_ALLOC(aligned_alloc, ArenaAllocator)
         }
         return {ptr, none};
     }
-    return {null, Alloc_Exhausted};
+    return {null, Alloc_ExhaustedMem};
 }
 
 static_assert(SomeAllocator<HeapAllocator>);

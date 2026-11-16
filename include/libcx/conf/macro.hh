@@ -47,16 +47,16 @@
     #endif
 #endif
 
-#ifndef priv  // internal linkage procedures/variables
+#ifndef priv  // internal linkage procedures and variables
     #define priv static
 #endif
-#ifndef glob
+#ifndef glob  // global variables or static members
     #define glob static
 #endif
 #ifndef persist  // persistent local variables
     #define persist static
 #endif
-#ifndef onedef  // single procedure/variable across translation units
+#ifndef onedef  // single variable across translation units
     #define onedef inline
 #endif
 
