@@ -221,7 +221,7 @@ ALIGNED_FREE(aligned_free, HeapAllocator)
     if (ptr != null) like {
         ::free(cast(void** ,ptr)[-1]);
     }
-    return null;
+    return none;
 }
 
 ALIGNED_ALLOC(aligned_alloc, HeapAllocator) {
@@ -240,7 +240,7 @@ ALIGNED_ALLOC(aligned_alloc, HeapAllocator) {
     isize space = PTR_SIZE + (align - 1) + size;
     mutaptr alloced_mem = heap_alloc(space, flags);
     if (alloced_mem == null) {
-        return {null, Alloc_ExhaustedMem};
+        return {null, Alloc_Exhausted};
     }
 
     mutaptr aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), align);
@@ -282,7 +282,7 @@ ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
     if (force_copy) {
         alloced_mem = heap_alloc(space, AllocFlags_None);
         if (alloced_mem == null) {
-            return {null, Alloc_ExhaustedMem};
+            return {null, Alloc_Exhausted};
         }
         aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), new_align);
         (cast(void** ,aligned_mem))[-1] = alloced_mem;
@@ -293,7 +293,7 @@ ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
         mutaptr base_ptr = cast(void** ,old_ptr)[-1];
         alloced_mem = heap_resize(base_ptr, space);
         if (alloced_mem == null) {
-            return {null, Alloc_ExhaustedMem};
+            return {null, Alloc_Exhausted};
         }
         aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), new_align);
         (cast(void** ,aligned_mem))[-1] = alloced_mem;
@@ -370,7 +370,7 @@ ALIGNED_ALLOC(aligned_alloc, ArenaAllocator)
         }
         return {ptr, none};
     }
-    return {null, Alloc_ExhaustedMem};
+    return {null, Alloc_Exhausted};
 }
 
 static_assert(SomeAllocator<HeapAllocator>);
