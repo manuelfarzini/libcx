@@ -4,9 +4,10 @@
 #define CX_UTI_RVALUE_HH
 
 #include "libcx/conf/macro.hh"
-#include "libcx/uti/sfinae.hh"
-#include "libcx/uti/decay.hh"
+#include "libcx/trait/qualifier.hh"
 #include "libcx/uti/common_ref.hh"
+#include "libcx/uti/decay.hh"
+#include "libcx/uti/sfinae.hh"
 
 namespace cx {
 inline namespace uti {
@@ -59,7 +60,9 @@ template<typename T> struct ___decay_rvalue {};
 template<typename T> struct ___decay_rvalue<T&> { using type = T&; };
 template<typename T> struct ___decay_rvalue<T&&> { using type = decay<T>; };
 template<typename T> using decay_rvalue = typename ___decay_rvalue<T>::type;
-#define cx_auto_ref(var, ...) decay_rvalue<declt((__VA_ARGS__))&&> var = (__VA_ARGS__);
+#ifndef cx_auto_ref
+    #define cx_auto_ref(var, ...) decay_rvalue<declt((__VA_ARGS__))&&> var = (__VA_ARGS__);
+#endif
 
 // 3.
 // A custom version of the common reference trait
@@ -91,9 +94,11 @@ template<typename... Ts> using common_ref_rval = ___common_ref_rval<Ts...>::Type
 // }
 // Binds to `const&&` if there is an rvalue.
 // Prevents an immediate copy.
-#define cx_condition_ref(b, l, r)                                       \
-  (b ? static_cast<common_ref<declt((l)), declt((r))>>(l)  \
-     : static_cast<common_ref<declt((l)), declt((r))>>(r))
+#ifndef cx_condition_ref
+    #define cx_condition_ref(b, l, r)                                       \
+        (b ? static_cast<common_ref<declt((l)), declt((r))>>(l)             \
+           : static_cast<common_ref<declt((l)), declt((r))>>(r))
+#endif
 // Example of usage:
 // struct A {};
 // struct B {
@@ -109,6 +114,6 @@ template<typename... Ts> using common_ref_rval = ___common_ref_rval<Ts...>::Type
 //   auto y = cx_condition_ref(x, b.get_al(), b.get_ar());
 // }
 
-}       // namespace cx
 }       // namespace uti
+}       // namespace cx
 #endif  // CX_UTI_RVALUE_HH

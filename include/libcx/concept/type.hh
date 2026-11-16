@@ -1,11 +1,11 @@
-/** @file libcx/concept/type.hh */
+/** @file libcx/concept/type.hh **/
 
-#ifndef CX_CONCEPTS_TYPES_HH
-#define CX_CONCEPTS_TYPES_HH
+#ifndef CX_CONCEPT_TYPE_HH
+#define CX_CONCEPT_TYPE_HH
 
-#include "libcx/traits/lifetime.hh"
-#include "libcx/traits/relation.hh"
-#include "libcx/traits/types.hh"
+#include "libcx/trait/lifetime.hh"
+#include "libcx/trait/relation.hh"
+#include "libcx/trait/types.hh"
 
 namespace cx {
 inline namespace uti {
@@ -26,6 +26,6 @@ concept SomePlainRawPointer = SomeRawPointer<T> && !is_cv_qual<T> && !is_cv_qual
 
 template<typename T> concept PlainZeroInitble = is_zero_initble<T> && !is_cv_qual<T>;
 
-}       // namespace cx
 }       // namespace uti
-#endif  // CX_CONCEPTS_TYPES_HH
+}       // namespace cx
+#endif  // CX_CONCEPT_TYPE_HH

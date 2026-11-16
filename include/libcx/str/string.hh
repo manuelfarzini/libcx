@@ -26,9 +26,8 @@ comp fn priv__zs_short_fpath_len() noexce -> usize
 ///
 template<
   ZeroString Z, 
-  usize M = priv__zs_short_fpath_len<Z>(),
-  Requires(M <= Z.len)>
-comp fn zs_short_fpath() noexce -> ZeroString<M>
+  usize M = priv__zs_short_fpath_len<Z>()>
+comp fn zs_short_fpath() noexce -> ZeroString<M> with (M <= Z.len)
 {
   ZeroString<M> res{};
   usize i = 0;

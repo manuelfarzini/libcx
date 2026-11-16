@@ -4,6 +4,7 @@
 #define CX_MEM_POINTER_HH
 
 #include "libcx/config.hh"
+#include "libcx/concept/type.hh"
 
 namespace cx {
 inline namespace mem {

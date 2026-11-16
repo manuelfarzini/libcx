@@ -127,7 +127,7 @@ template<
     typename Size = SizeIn<Arr>,
     typename... Args>
 cons fn push_back(Arr& arr, Size num, Args&&... args) noexce -> ErrorCode
-    where (same_or_cvref<ElemIn<Arr>, Args>&&...)
+    with (same_or_cvref<ElemIn<Arr>, Args>&&...)
 {
     if (num == 0) {
         return false;
@@ -164,7 +164,7 @@ fn pop_back(Arr& arr, Elm& res) noexce -> bool
 
 template<SomeInlineArray Arr, typename Elm, OrderType Cmp = Lne>
 cons fn find(Arr& arr, Elm&& elm, Cmp cmp = lne) noexce -> isize
-    where is_total_ordered<ElemIn<Arr>> && same_or_cvref<ElemIn<Arr>, Elm>
+    with is_total_ordered<ElemIn<Arr>> && same_or_cvref<ElemIn<Arr>, Elm>
 {
     isize i;
     if constexpr (same_as<Cmp, Lne>) {
@@ -200,7 +200,7 @@ template<
     SomeInlineArray Arr, typename Key, typename Cmp
 > 
 cons fn find(Arr& arr, Key&& key, Cmp cmp) noexce -> isize
-    where (!SomeComparator<Cmp>
+    with (!SomeComparator<Cmp>
            && is_total_ordered<ElemIn<Arr>>
            && is_total_ordered_w<ElemIn<Arr>, PlainT<Key>>)
 {
@@ -219,7 +219,7 @@ template<
     SomeInlineArray Arr, typename Elm, OrderType Cmp = Lne
 >
 cons fn insert(Arr& arr, Elm&& elm, Cmp cmp = lne) noexce -> isize
-    where is_total_ordered<ElemIn<Arr>>&& same_or_cvref<ElemIn<Arr>, Elm>
+    with is_total_ordered<ElemIn<Arr>>&& same_or_cvref<ElemIn<Arr>, Elm>
 {
     if (arr.len == arr.cap) {
         return -1;

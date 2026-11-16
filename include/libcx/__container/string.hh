@@ -58,7 +58,7 @@ cons fn make_string(
         return string{.s{cx_extract16(txt)}};
     }
 
-    auto [ptr, err] = mem::cx_mem_alloc(alctor, len);
+    auto [ptr, err] = mem::mem_alloc(alctor, len);
     return string{.l{.ptr = byteptr(ptr), .len = len}};
 }
 

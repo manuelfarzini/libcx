@@ -4,7 +4,7 @@
 #define CX_UTI_DECAY_HH
 
 #include "libcx/conf/macro.hh"
-#include "libcx/traits/types.hh"
+#include "libcx/trait/types.hh"
 #include "libcx/uti/sfinae.hh"
 
 namespace cx {

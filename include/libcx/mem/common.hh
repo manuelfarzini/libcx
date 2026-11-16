@@ -3,7 +3,8 @@
 #ifndef LIBCX_MEM_COMMON_HH
 #define LIBCX_MEM_COMMON_HH
 
-#include "libcx/conf/simd.hh"
+#include "libcx/conf/prelude.hh"
+#include "libcx/conf/type.hh"
 #include "libcx/trait.hh"
 #include "libcx/concept.hh"
 #include "libcx/uti/ownership.hh"
@@ -68,7 +69,7 @@ mem_copy(mutaptr cx_restrict dst, readptr cx_restrict src, isize size) noexce ->
 **/
 template<typename T>
 inln cons fn mem_copy(T* cx_restrict dst, T const* cx_restrict src, isize num) noexce -> void
-    where (not is_void<T>)
+    with (not is_void<T>)
 {
     cx_assume(
         uptr(dst) + num * size_of(T) <= uptr(src) || uptr(src) + num * size_of(T) <= uptr(dst)
@@ -98,7 +99,7 @@ inln cons fn mem_move(mutaptr dst, readptr src, isize size) -> void
     - `src` and `dst` have `num` elements
 **/
 template<typename T>
-inln cons fn mem_move(T* dst, T const* src, isize num) noexce -> void where (not is_void<T>)
+inln cons fn mem_move(T* dst, T const* src, isize num) noexce -> void with (not is_void<T>)
 {
     mem_move(mutaptr(dst), mutaptr(src), num * size_of(T));
 }
@@ -113,7 +114,7 @@ inln cons fn mem_move(T* dst, T const* src, isize num) noexce -> void where (not
     - `src` and `dst` have `num` elements
 **/
 template<CpOrMvAsble T>
-cons fn mem_take(T* dst, T const* src, isize num) noexce -> void where (not is_void<T>)
+cons fn mem_take(T* dst, T const* src, isize num) noexce -> void with (not is_void<T>)
 {
     for (isize i = 0; i < num; i++) {
         dst[i] = take(src[i]);
@@ -297,7 +298,7 @@ template<ZeroInitble T, typename... Args>
 nodisc cons fn init_va(
     mutaptr ptr, isize num, Args const&... args
 ) noexce -> Res<T*, ErrorCode>
-    where is_ctble<T, Args const&...>
+    with is_ctble<T, Args const&...>
 {
     if (num == 0) {
         return {null, Invalid_Arg};
@@ -326,7 +327,7 @@ nodisc cons fn init_va(
 **/
 template<typename T, typename U>
 cons fn init_ls(mutaptr ptr, initls<U> lst) noexce -> ErrorCode
-    where is_ctble<T, U const&>
+    with is_ctble<T, U const&>
 {
     if (ptr == null) {
         return Invalid_Ptr;

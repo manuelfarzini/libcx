@@ -3,7 +3,7 @@
 #ifndef CX_UTI_DEFER_HH
 #define CX_UTI_DEFER_HH
 
-#include "libcx/config.hh"
+#include "libcx/conf/macro.hh"
 #include "libcx/uti/ownership.hh"
 
 namespace cx {
@@ -44,8 +44,8 @@ inln cons fn defer_wrapper(F&& f) noexce -> DeferWrapper<F>
 #define cx_defer_loop_stop() _cx_dl_stop_ = 1
 #endif
 
-}       // namespace cx
 }       // namespace uti
+}       // namespace cx
 #endif  // CX_UTI_DEFER_HH
 
 /*

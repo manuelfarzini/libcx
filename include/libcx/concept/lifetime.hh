@@ -1,9 +1,9 @@
-/** @file libcx/concepts/lifetime.hh **/
+/** @file libcx/concept/lifetime.hh **/
 
-#ifndef CX_CONCEPTS_LIFETIME_HH
-#define CX_CONCEPTS_LIFETIME_HH
+#ifndef CX_CONCEPT_LIFETIME_HH
+#define CX_CONCEPT_LIFETIME_HH
 
-#include "libcx/traits/lifetime.hh"
+#include "libcx/trait/lifetime.hh"
 
 namespace cx {
 inline namespace uti {
@@ -23,6 +23,6 @@ template<typename... Ts> proposition TrivDtble = (is_triv_dtble<Ts> && ...);
 // FIX:(manu): should impose sizeof...(Ts) >= 1 ?
 // static_assert(DefCtble<>); // e.g. this one should work? Now does.
 
-}       // namespace cx
 }       // namespace uti
-#endif  // CX_CONCEPTS_LIFETIME_HH
+}       // namespace cx
+#endif  // CX_CONCEPT_LIFETIME_HH

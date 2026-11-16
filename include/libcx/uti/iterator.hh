@@ -1,8 +1,9 @@
-/** @file libcx/ite/iterator.hh **/
+/** @file libcx/uti/iterator.hh **/
 
 #ifndef CX_UTI_ITERATOR_HH
 #define CX_UTI_ITERATOR_HH
 
+#include "libcx/conf/macro.hh"
 #include "libcx/uti/members.hh"
 
 namespace cx {
@@ -109,4 +110,4 @@ inln cons fn rend(auto const& c) noexce -> declt(auto)
 
 }       // namespace uti
 }       // namespace cx
-#endif  // CX_ITE_ITERATOR_HH
+#endif  // CX_UTI_ITERATOR_HH

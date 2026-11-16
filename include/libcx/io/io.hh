@@ -51,10 +51,9 @@ inln onedef cons fn chview(usize num) noexce -> auto
     return fast_io::mnp::chvw(num);
 }
 
-template<
-    std::ranges::contiguous_range Rng,
-    Requires(std::integral<std::ranges::range_value_t<Rng>>)>
+template<std::ranges::contiguous_range Rng>
 inln onedef cons fn strview(Rng&& r) noexce -> auto
+    with (std::integral<std::ranges::range_value_t<Rng>>)
 {
     return fast_io::mnp::strvw(r);
 }

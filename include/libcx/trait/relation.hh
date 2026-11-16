@@ -1,9 +1,9 @@
-/** @file libcx/traits/relation.hh **/
+/** @file libcx/trait/relation.hh **/
 
-#ifndef CX_TRAITS_RELATION_HH
-#define CX_TRAITS_RELATION_HH
+#ifndef CX_TRAIT_RELATION_HH
+#define CX_TRAIT_RELATION_HH
 
-#include "libcx/uti/declval.hh"
+#include "libcx/trait/qualifier.hh"
 
 namespace cx {
 
@@ -33,4 +33,4 @@ template<typename T, typename U>
 using ternary_res = declt(false ? declv<T>() : declv<U>());
 
 }       // namespace cx
-#endif  // CX_TRAITS_RELATION_HH
+#endif  // CX_TRAIT_RELATION_HH

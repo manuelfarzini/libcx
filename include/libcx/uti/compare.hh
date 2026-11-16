@@ -3,10 +3,10 @@
 #ifndef CX_UTI_COMPARE_HH
 #define CX_UTI_COMPARE_HH
 
-#include "libcx/config.hh"
-#include "libcx/uti/ownership.hh"
-#include "libcx/traits/logic.hh"
+#include "libcx/conf/macro.hh"
+#include "libcx/trait/logic.hh"
 #include "libcx/uti/common_ref.hh"
+#include "libcx/uti/ownership.hh"
 
 namespace cx {
 inline namespace uti {
@@ -73,7 +73,7 @@ template<> proposition is_order_type<Lne> = true;
 template<> proposition is_order_type<Gne> = true;
 template<typename T> concept OrderType = is_order_type<T>;
 
-template<typename T> proposition is_equal_order_type = true;
+template<typename T> proposition is_equal_order_type = false;
 template<> proposition is_equal_order_type<Leq> = true;
 template<> proposition is_equal_order_type<Geq> = true;
 template<typename T> concept EqualOrderType = is_equal_order_type<T>;
@@ -84,25 +84,25 @@ concept SomeComparator = EqualType<T> || OrderType<T> || EqualOrderType<T>;
 struct Eq {
     template<typename T, typename U>
     nodisc inln glob proposition operator()(T&& t, U&& u) noexce
-        where(is_equal_compble_w<T, U>) { return forward<T>(t) == forward<U>(u); }
+        with(is_equal_compble_w<T, U>) { return forward<T>(t) == forward<U>(u); }
 };
 
 struct Neq {
     template<typename T, typename U>
     nodisc inln glob proposition operator()(T&& t, U&& u) noexce
-        where(is_equal_compble_w<T, U>) { return !(forward<T>(t) == forward<U>(u)); }
+        with(is_equal_compble_w<T, U>) { return !(forward<T>(t) == forward<U>(u)); }
 };
 
 struct Lne {
     template<typename T, typename U>
     nodisc inln glob proposition operator()(T&& t, U&& u) noexce
-        where (is_total_ordered_w<T, U>) { return forward<T>(t) < forward<U>(u); }
+        with (is_total_ordered_w<T, U>) { return forward<T>(t) < forward<U>(u); }
 };
 
 struct Leq {
     template<typename T, typename U>
     nodisc inln glob proposition operator()(T&& t, U&& u) noexce
-        where(is_total_ordered_w<T, U>)
+        with(is_total_ordered_w<T, U>)
     {
         return !(forward<T>(u) < forward<U>(t));
     }
@@ -111,13 +111,13 @@ struct Leq {
 struct Gne {
     template<typename T, typename U>
     nodisc inln glob proposition operator()(T&& t, U&& u) noexce
-        where(is_total_ordered_w<T, U>) { return forward<T>(u) < forward<U>(t); }
+        with(is_total_ordered_w<T, U>) { return forward<T>(u) < forward<U>(t); }
 };
 
 struct Geq {
     template<typename T, typename U>
     nodisc inln glob proposition operator()(T&& t, U&& u) noexce
-        where(is_total_ordered_w<T, U>) { return !(forward<T>(t) < forward<U>(u)); }
+        with(is_total_ordered_w<T, U>) { return !(forward<T>(t) < forward<U>(u)); }
 };
 
 onedef cons Eq eq{};

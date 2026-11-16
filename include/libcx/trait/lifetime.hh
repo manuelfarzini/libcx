@@ -1,9 +1,9 @@
-/** @file libcx/traits/lifetime.hh **/
+/** @file libcx/trait/lifetime.hh **/
 
-#ifndef CX_TRAITS_LIFETIME_HH
-#define CX_TRAITS_LIFETIME_HH
+#ifndef CX_TRAIT_LIFETIME_HH
+#define CX_TRAIT_LIFETIME_HH
 
-#include "libcx/traits/qualifier.hh"
+#include "libcx/trait/qualifier.hh"
 
 namespace cx {
 inline namespace uti {
@@ -38,6 +38,6 @@ proposition is_zero_initble = is_triv_dtble<T> && requires { T{}; } && requires 
 template<typename T> proposition is_cp_or_mv_ctble = is_cp_ctble<T> || is_mv_ctble<T>;
 template<typename T> proposition is_cp_or_mv_asble = is_cp_asble<T> || is_mv_asble<T>;
 
-}       // namespace cx
 }       // namespace uti
-#endif  // CX_TRAITS_LIFETIME_HH
+}       // namespace cx
+#endif  // CX_TRAIT_LIFETIME_HH

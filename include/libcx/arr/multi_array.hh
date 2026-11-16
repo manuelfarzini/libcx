@@ -7,7 +7,6 @@
 #include "libcx/arr/static_array.hh"
 #include "libcx/mem/multi.hh"
 #include "libcx/concept/multi.hh"
-#include "libcx/traits/multi.hh"
 #include "libcx/uti/typeseq.hh"
 #include "libcx/uti/tuple.hh"
 #include "libcx/uti/utilities.hh"
@@ -299,7 +298,7 @@ fn free(Soa<HeapAllocator, Ts...>& arr) -> ErrorCode
 **/
 template<SomeSoa Arr, typename... Ts>
 fn append(Arr& arr, Ts&&... els) -> ErrorCode
-    where (multi_same_or_ref<typename Arr::Types, TypeSeq<Ts...>>)
+    with (multi_same_or_ref<typename Arr::Types, TypeSeq<Ts...>>)
 {
     ErrorCode err = ensure_capacity(arr, arr.len + 1) or_return err;
 

@@ -1,5 +1,5 @@
-#ifndef CX_TRAITS_UNDER_HH
-#define CX_TRAITS_UNDER_HH
+#ifndef CX_TRAIT_UNDER_HH
+#define CX_TRAIT_UNDER_HH
 
 #include "libcx/conf/hal.hh"
 
@@ -27,4 +27,4 @@ using UnderSint = BytesToSint<sizeof(T)>;
 template<typename T>
 using UnderUint = BytesToUint<sizeof(T)>;
 
-#endif  // CX_TRAITS_UNDER_HH
+#endif  // CX_TRAIT_UNDER_HH

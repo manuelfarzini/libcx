@@ -15,7 +15,7 @@
 #include "libcx/arr/static_array.hh"
 #include "libcx/math/math.hh"
 #include "libcx/mem/common.hh"
-#include "libcx/mem/allocator.hh"
+#include "libcx/mem/__alloc_typed.hh"
 #include "libcx/uti/typeseq.hh"
 
 namespace cx {
@@ -563,4 +563,3 @@ inln cons fn _multi_bind_arr(mutaptr ptr, isize new_num) -> StaticArray<mutaptr,
 //     #define cx_multi_mem_take_arr(dst, src, num, ...) \
 //         multi_mem_take<declt(dst), __VA_ARGS__>(dst, src, num)
 // #endif
-

@@ -3,8 +3,8 @@
 #ifndef CX_UTI_OWNERSHIP_HH
 #define CX_UTI_OWNERSHIP_HH
 
-#include "libcx/conf/prelude.hh"
-#include "libcx/traits/qualifier.hh"
+#include "libcx/conf/macro.hh"
+#include "libcx/trait/qualifier.hh"
 
 namespace cx {
 inline namespace uti {
@@ -15,7 +15,7 @@ nodisc inln cons fn forward(rm_ref<T>& x) noexce -> T&&
   return static_cast<T&&>(x);
 }
 
-template<typename T> where (!is_lref<T>)
+template<typename T> with (!is_lref<T>)
 nodisc inln cons fn forward(rm_ref<T>&& x) noexce -> T&&
 {
   return static_cast<T&&>(x);

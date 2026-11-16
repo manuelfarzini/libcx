@@ -4,14 +4,14 @@
 #define CX_ARR_STATIC_ARRAY_HH
 
 #include "libcx/concept/lifetime.hh"
-#include "libcx/traits/logic.hh"
+#include "libcx/trait/logic.hh"
 #include "libcx/uti/iterator.hh"
 #include "libcx/uti/sfinae.hh"
 
 namespace cx {
 inline namespace arr {
 
-template<ZeroInitble E, isize Cap, typename S = isize> where (Cap > 0)
+template<ZeroInitble E, isize Cap, typename S = isize> with (Cap > 0)
 struct StaticArray
 {
     CX_DEFINE_MEMBER_TYPES(E, S);

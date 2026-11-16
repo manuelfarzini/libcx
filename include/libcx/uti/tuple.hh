@@ -3,6 +3,7 @@
 #ifndef CX_UTI_TUPLE_HH
 #define CX_UTI_TUPLE_HH
 
+#include "libcx/conf/macro.hh"
 #include "libcx/uti/ownership.hh"
 #include "libcx/uti/sfinae.hh"
 #include "libcx/uti/typeseq.hh"
@@ -22,6 +23,12 @@ inline namespace uti {
     - `Ts...`: the types of the elements
 **/
 template<typename... Types> struct Tuple;
+
+/**
+    Go-style multiple return: a `Tuple` used to carry results alongside an
+    `ErrorCode`.
+**/
+template<typename... Ts> using Res = Tuple<Ts...>;
 
 template<typename T0>
 struct Tuple<T0> {
@@ -119,8 +126,8 @@ CX_CONCEPT_GEN_TEMPL(Tuple, is_tuple, SomeTuple, typename... Us, Us...);
 
 // Operations definition.
 
-template<isize idx, SomeTuple Tup req (idx < Tup::size)>
-inln cons fn get(Tup& tup) -> auto&
+template<isize idx, SomeTuple Tup>
+inln cons fn get(Tup& tup) -> auto& with (idx < Tup::size)
 {
     if constexpr (idx == 0) {
         return tup.e0;
@@ -141,8 +148,8 @@ inln cons fn get(Tup& tup) -> auto&
     }
 }
 
-template<isize idx, SomeTuple Tup req (idx < Tup::size)>
-inln cons fn get(Tup const& tup) -> auto const&
+template<isize idx, SomeTuple Tup>
+inln cons fn get(Tup const& tup) -> auto const& with (idx < Tup::size)
 {
     if constexpr (idx == 0) {
         return tup.e0;
@@ -177,7 +184,7 @@ inln cons fn get(Tup const& tup) -> auto const&
     return get<idx>(tup);
 }
 
-}       // namespace cx
+}       // namespace uti
 }       // namespace cx
 #endif  // CX_UTI_TUPLE_HH
 

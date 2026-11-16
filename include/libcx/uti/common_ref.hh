@@ -4,8 +4,8 @@
 #define CX_UTI_COMMON_REF_HH
 
 #include "libcx/conf/macro.hh"
-#include "libcx/traits/qualifier.hh"
-#include "libcx/traits/relation.hh"
+#include "libcx/trait/qualifier.hh"
+#include "libcx/trait/relation.hh"
 #include "libcx/uti/sfinae.hh"
 
 namespace cx  {
@@ -68,6 +68,6 @@ proposition common_ref_w = same_as<common_ref<T, U>, common_ref<U, T>>
                          && is_convertible<U, common_ref<T, U>>;
 
 #undef  cx__accept
-}       // namespace cx
+}       // namespace uti
 }       // namespace cx
 #endif  // CX_UTI_COMMON_REF_HH

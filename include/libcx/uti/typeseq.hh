@@ -5,7 +5,7 @@
 
 #include "libcx/conf/macro.hh"
 #include "libcx/concept/type.hh"
-#include "libcx/uti/members.hh"
+#include "libcx/trait/relation.hh"
 
 namespace cx {
 inline namespace uti {
@@ -150,6 +150,24 @@ using index_seq_va = index_seq<isize{sizeof...(Ts)}>;
 
 template<typename T>
 using index_seq_for = index_seq<isize{T::size}>;
+
+////////////////////////////////////////////
+// Same type or reference of the same type, typewise
+
+template<SomeTypeSeq L1, SomeTypeSeq L2, isize I = 0>
+    with (L1::size == L2::size)
+struct _multi_same_or_ref {
+    using T = TypeAt<I, L1>;
+    using U = TypeAt<I, L2>;
+    glob proposition value = same_or_ref<T, U> &&
+                             _multi_same_or_ref<L1, L2, I + 1>::value;
+};
+
+template<SomeTypeSeq L1, SomeTypeSeq L2>
+struct _multi_same_or_ref<L1, L2> { glob proposition value = true; };
+
+template<SomeTypeSeq Ts, SomeTypeSeq Us>
+proposition multi_same_or_ref = _multi_same_or_ref<Ts, Us>::value;
 
 }       // namespace uti
 }       // namespace cx

@@ -15,19 +15,18 @@
 namespace cx {
 inline namespace arr {
 
-template<ZeroInitble E, SomeAllocator A = HeapAllocator, typename S = isize>
+template<ZeroInitble E, typename S = isize>
 struct DynamicArray
 {
     CX_DEFINE_MEMBER_TYPES(E, S);
-    using Alc = A;
-    using Self = DynamicArray<E, A, S>;
+    using Self = DynamicArray<E, S>;
 
     Iter ptr{null};
     Size len{0};
     Size cap{0};
-    Alc  alc{};
+    Allocator alc{};
 
-    // TODO: define the operator using forward_with 
+    // TODO:(manu) Should I define the operator using forward_with?
     inln cons fn operator[](this auto& arr, isize const i) noexce -> Elem&
     {
         return arr.ptr[i];
@@ -50,11 +49,11 @@ DynamicArray(E, Es...) -> DynamicArray<enable_if<bvariand<same_as<E, Es>...>, E>
 
 CX_CONCEPT_GEN_TEMPL(
     DynamicArray, is_array, SomeDynamicArray,
-    VA_(typename E, SomeAllocator A, typename S), VA_(E, A, S)
+    VA_(typename E, typename S), VA_(E, S)
 );
 
 template<typename T, typename E>                  proposition is_array_of = false;
-template<typename T, typename S, SomeAllocator A> proposition is_array_of<DynamicArray<T, S, A>, T> = true;
+template<typename T, typename S> proposition is_array_of<DynamicArray<T, S>, T> = true;
 template<typename Arr, typename E>                concept SomeArrayOf = is_array_of<Arr, E>;
 
 /** Equality operator. **/
@@ -118,8 +117,8 @@ cons fn resize(SomeDynamicArray auto& arr, isize new_cap) noexce -> ErrorCode
     // assert(is_power_of_two(new_cap)); XXX: waht if i round to the next p2
 
     isize bytes = size_of(Elem);
-    auto [ptr, err] = aligned_resize(
-        arr.alc, arr.ptr, new_cap * bytes, arr.cap * bytes, align_of(Elem)
+    auto [ptr, err] = mem_resize(
+        arr.alc, arr.ptr, arr.cap * bytes, new_cap * bytes, align_of(Elem)
     ) or_return err;
 
     arr.ptr = Iter(ptr);
@@ -136,15 +135,13 @@ cons fn resize(SomeDynamicArray auto& arr) noexce -> ErrorCode
 }
 
 // To be used for quick inline variable definitions from temporary values.
-template<SomeAllocator A = HeapAllocator, typename S = isize, typename E, typename... Es>
-cons fn dynamic_array(
-    E&& e, Es&&... es
-) noexce -> Res<DynamicArray<PlainT<E>, A, S>, ErrorCode>
-    where bvariand<same_as<PlainT<E>, PlainT<Es>>...>
+template<typename S = isize, typename E, typename... Es>
+cons fn dynamic_array(E&& e, Es&&... es) noexce -> Res<DynamicArray<PlainT<E>, S>, ErrorCode>
+    with (same_as<PlainT<E>, PlainT<Es>> && ...)
 {
     using Elem = PlainT<E>;
 
-    DynamicArray<Elem, A, S> arr{};
+    DynamicArray<Elem, S> arr{.alc = heap_allocator()};
     ErrorCode err;
     err = resize(arr, 1 + sizeof...(Es)) or_return {arr, err};
     arr.ptr[0] = forward<E>(e);
@@ -157,19 +154,19 @@ cons fn dynamic_array(
     return {arr, null};
 }
 
-template<ZeroInitble E, SomeAllocator A = HeapAllocator, typename S = isize>
-cons fn make(isize cap, A alc = heap_allocator()) noexce -> Res<DynamicArray<E, A, S>, ErrorCode>
+template<ZeroInitble E, typename S = isize>
+cons fn make(isize cap, Allocator a = heap_allocator()) noexce -> Res<DynamicArray<E, S>, ErrorCode>
 {
-    auto arr = DynamicArray<E, A, S>{.ptr{null}, .len{0}, .cap{0}, .alc{alc}};
-    auto err = resize(arr, cap) or_return {DynamicArray<E, A, S>{}, err};
-    err = init_type<E>(arr.ptr, arr.cap) or_return {DynamicArray<E, A, S>{}, err};
+    auto arr = DynamicArray<E, S>{.ptr{null}, .len{0}, .cap{0}, .alc{a}};
+    auto err = resize(arr, cap) or_return {DynamicArray<E, S>{}, err};
+    err = init_type<E>(arr.ptr, arr.cap) or_return {DynamicArray<E, S>{}, err};
     arr.cap = cap;
     return {arr, null};
 }
 
 // Forwarding, do I want to do that?
 cons fn push_tail(SomeDynamicArray auto& arr, auto&& elm) noexce -> ErrorCode
-    where same_or_cvref<elem_in(arr), declt(elm)>
+    with same_or_cvref<elem_in(arr), declt(elm)>
 {
     if (arr.len == arr.cap) unlike {
         auto err = resize(arr) or_return err;
@@ -246,7 +243,7 @@ inln cons fn rshift(Arr& arr, Size beg, Size end, Size off) noexce -> bool
 **/
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
 inln cons fn find_last(Arr const& arr, Key const& key, Cmp cmp = lne) noexce -> isize
-    where (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) > 16)
+    with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) > 16)
 {
     if (arr.len <= 0) unlike {
         return -1; // XXX:
@@ -279,7 +276,7 @@ inln cons fn find_last(Arr const& arr, Key const& key, Cmp cmp = lne) noexce -> 
 **/
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
 inln cons fn find_last(Arr const& arr, Key key, Cmp cmp = lne) noexce -> isize
-    where (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) <= 16)
+    with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) <= 16)
 {
     if (arr.len <= 0) unlike {
         return -1; // XXX:
@@ -297,7 +294,7 @@ inln cons fn find_last(Arr const& arr, Key key, Cmp cmp = lne) noexce -> isize
 
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
 inln cons fn find_first(Arr const& arr, Key const& key, Cmp cmp = lne) noexce -> isize
-    where (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) > 16)
+    with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) > 16)
 {
     if (arr.len <= 0) unlike {
         return -1;
@@ -318,7 +315,7 @@ inln cons fn find_first(Arr const& arr, Key const& key, Cmp cmp = lne) noexce ->
 
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
 inln cons fn find_first(Arr const& arr, Key key, Cmp cmp = lne) noexce -> isize
-    where (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) <= 16)
+    with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) <= 16)
 {
     if (arr.len <= 0) unlike {
         return -1;
@@ -339,7 +336,7 @@ inln cons fn find_first(Arr const& arr, Key key, Cmp cmp = lne) noexce -> isize
 
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
 cons fn insert(Arr& arr, Key const& key, Cmp cmp = lne) noexce -> isize
-    where (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) > 16)
+    with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) > 16)
 {
     if (isize err; arr.len >= arr.cap) {
         err = resize(arr) or_return - 1;
@@ -353,7 +350,7 @@ cons fn insert(Arr& arr, Key const& key, Cmp cmp = lne) noexce -> isize
 
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
 cons fn insert(Arr& arr, Key key, Cmp cmp = lne) noexce -> isize
-    where (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) <= 16)
+    with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) <= 16)
 {
     if (isize err; arr.len >= arr.cap) {
         err = resize(arr) or_return - 1;

@@ -6,8 +6,6 @@
 #include "libcx/conf/hal.hh"
 #include "libcx/conf/macro.hh"
 #include "libcx/conf/prelude.hh"
-
-#include "libcx/conf/prelude.hh"
 #include "libcx/conf/simd.hh"
 #include "libcx/conf/type.hh"
 

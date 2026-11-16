@@ -3,7 +3,7 @@
 #ifndef CX_UTI_MEMBERS_HH
 #define CX_UTI_MEMBERS_HH
 
-#include "libcx/traits/lifetime.hh"
+#include "libcx/trait/qualifier.hh"
 
 namespace cx {
 inline namespace uti {
@@ -61,6 +61,6 @@ template<typename T> struct ___plain_t { using Type = rm_cvref<T>; };
   #define selft(cont) typename cx::uti::rm_cvref<declt(cont)>::Self
 #endif
 
-}       // namespace cx
+}       // namespace uti
 }       // namespace cx
 #endif  // CX_UTI_MEMBERS_HH

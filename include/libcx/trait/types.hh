@@ -1,9 +1,9 @@
-/** @file libcx/traits/types.hh **/
+/** @file libcx/trait/types.hh **/
 
-#ifndef CX_TRAITS_TYPES_HH
-#define CX_TRAITS_TYPES_HH
+#ifndef CX_TRAIT_TYPES_HH
+#define CX_TRAIT_TYPES_HH
 
-#include "libcx/traits/qualifier.hh"
+#include "libcx/trait/qualifier.hh"
 
 namespace cx {
 
@@ -109,4 +109,4 @@ template<>           proposition is_void<void> = true;
 // template<typename U, typename D> proposition is_smart_ptr<std::unique_ptr<U, D>> = true;
 
 }       // namespace cx
-#endif  // CX_TRAITS_TYPES_HH
+#endif  // CX_TRAIT_TYPES_HH

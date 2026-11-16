@@ -1,12 +1,15 @@
-/** @file libcx/__utils/container.hh **/
+/** @file libcx/uti/container.hh **/
 
-#ifndef CX_UTILS_CONTAINER_HH
-#define CX_UTILS_CONTAINER_HH
+#ifndef CX_UTI_CONTAINER_HH
+#define CX_UTI_CONTAINER_HH
 
-#include "libcx/config.hh"
-#include "libcx/traits/types.hh"
-#include "libcx/uti/sfinae.hh"
+#include "libcx/conf/hal.hh"
+#include "libcx/conf/macro.hh"
+#include "libcx/conf/type.hh"
+#include "libcx/trait/relation.hh"
+#include "libcx/trait/types.hh"
 #include "libcx/uti/members.hh"
+#include "libcx/uti/sfinae.hh"
 
 namespace cx {
 inline namespace uti {
@@ -17,7 +20,7 @@ inline namespace uti {
 /** Predicate `true` if `C` is a container with raw erased byte storage. **/
 template<typename C>
 proposition is_erased_container = requires(C c) {
-    where (
+    with (
         (     is_raw_array<rm_cvref<declt(c.storage)>>
               && same_as<rm_extent<rm_cvref<declt(c.storage)>>, u8>  )
         || (  is_raw_ptr<rm_cvref<declt(c.storage)>>
@@ -46,7 +49,7 @@ concept SomeErasedContainer = is_erased_container<C>;
       storage, so the returned pointer refers to the current live object.
 **/
 template<typename T>
-nodisc cons fn launder(T* p) noexce -> T* where (!is_func<T> && !is_void<T>)
+nodisc cons fn launder(T* p) noexce -> T* with (!is_func<T> && !is_void<T>)
 {
     return __builtin_launder(p);
 }
@@ -107,4 +110,4 @@ using KeyOrSelf = typename ___KeyOrSelf<T>::Type;
 
 }       // namespace uti
 }       // namespace cx
-#endif  // CX_UTILS_CONTAINER_HH
+#endif  // CX_UTI_CONTAINER_HH

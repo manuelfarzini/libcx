@@ -28,7 +28,7 @@ struct StaticString {
     inln cons StaticString() noexce = default;
 
     /// Creates a `StaticString` from the given literal `src` of size `N`.
-    template<usize N> where (N <= C)
+    template<usize N> with (N <= C)
     inln comp StaticString(char const (&src)[N]) noexce : len(N)
     {
         for (u8 i = 0; i < N; i++) {

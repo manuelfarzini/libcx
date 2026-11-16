@@ -1,7 +1,7 @@
-/** @type conf/macro.hh **/
+/** @file conf/macro.hh **/
 
-#ifndef CX_CONF_MACRO
-#define CX_CONF_MACRO
+#ifndef CX_CONF_MACRO_HH
+#define CX_CONF_MACRO_HH
 
 #include "libcx/conf/hal.hh"
 
@@ -66,8 +66,8 @@
 #ifndef noexce
     #define noexce noexcept
 #endif
-#ifndef where
-    #define where requires
+#ifndef with
+    #define with requires
 #endif
 #ifndef proc
     #define proc(_name_, ...) inline auto _name_(__VA_ARGS__) noexcept ->
@@ -101,14 +101,6 @@
 
 #ifndef declt
     #define declt(x) decltype(x)
-#endif
-
-#ifndef Requires
-    #define Requires(...)                                                                \
-        typename = cx::enable_if<true> > requires (__VA_ARGS__) && cx::kpred < true
-#endif
-#ifndef req
-    #define req(...) , typename = cx::uti::enable_if<(__VA_ARGS__)>
 #endif
 
 ////////////////////////////////////////////
@@ -198,52 +190,6 @@
     #else
         #define CX_PRINTF_ARGS(fmt)
     #endif
-#endif
-
-////////////////////////////////////////////
-// Text manipulation
-
-#ifndef LIBCX
-    #define LIBCX namespace cx
-#endif
-#ifndef NS_
-    #define NS_(name) name::
-#endif
-#ifndef STR_
-    #define CX__STR_(x) #x
-    #define STR_(x) CX__STR_(x)
-#endif
-#ifndef VA_
-    #define VA_(...) __VA_ARGS__
-#endif
-
-#ifndef CX_LINE
-    #define CX_LINE __LINE__
-#endif
-#ifndef CX_FILE
-    #define CX_FILE __FILE__
-#endif
-#ifndef CX_FUNCTION
-    #if CX_COMPILER_CLANG || CX_COMPILER_GCC
-        #define CX_FUNCTION __PRETTY_FUNCTION__
-    #elif CX_COMPILER_MSVC
-        #define CX_FUNCTION __FUNCSIG__
-    #else
-        #define CX_FUNCTION __func__
-    #endif
-#endif
-
-#ifndef CX_JOIN
-    #define CX_JOIN 1
-    #define CX__JOIN2(a, b) a##b
-    #define CX_JOIN2(a, b) CX__JOIN2(a, b)
-    #define CX_JOIN3(a, b, c) CX_JOIN2(CX_JOIN2(a, b), c)
-    #define CX_JOIN4(a, b, c, d) CX_JOIN2(CX_JOIN2(CX_JOIN2(a, b), c), d)
-#endif
-
-#ifndef CX_UNIQ
-    #define CX__UNIQ(a, b) CX_JOIN2(a, b)
-    #define CX_UNIQ(base) CX__UNIQ(base, __COUNTER__)
 #endif
 
 ////////////////////////////////////////////
@@ -401,7 +347,6 @@
         32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, \
         16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1           \
     ))
-#endif
 
 #ifndef FOR__EACH_MACROS
     // Foreach base macro.
@@ -611,15 +556,15 @@
         #undef onedef         \
         #undef fn             \
         #undef noexce         \
-        #undef where          \
+        #undef with          \
         #undef proc           \
         #undef func           \
         #undef clos           \
         #undef comp           \
         #undef cons           \
-        #undef proposition      \
+        #undef proposition    \
         #undef cast           \
-        #undef nil            \
+        #undef nil
 #endif
-      
-#endif  // CX_CONF_MACRO
+
+#endif  // CX_CONF_MACRO_HH

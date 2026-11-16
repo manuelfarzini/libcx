@@ -1,14 +1,13 @@
-/** @file libcx/uti/traits.hh **/
+/** @file libcx/trait.hh **/
 
-#ifndef CX_UTI_TRAITS_HH
-#define CX_UTI_TRAITS_HH
+#ifndef CX_TRAIT_HH
+#define CX_TRAIT_HH
 
-#include "libcx/traits/lifetime.hh"
-#include "libcx/traits/logic.hh"
-#include "libcx/traits/multi.hh"
-#include "libcx/traits/qualifier.hh"
-#include "libcx/traits/relation.hh"
-#include "libcx/traits/types.hh"
-#include "libcx/traits/under.hh"
+#include "libcx/trait/lifetime.hh"
+#include "libcx/trait/logic.hh"
+#include "libcx/trait/qualifier.hh"
+#include "libcx/trait/relation.hh"
+#include "libcx/trait/types.hh"
+#include "libcx/trait/under.hh"
 
-#endif  // CX_UTI_TRAITS_HH
+#endif  // CX_TRAIT_HH

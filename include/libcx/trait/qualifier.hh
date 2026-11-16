@@ -1,7 +1,7 @@
-/** @file libcx/__raits/qualifier.hh **/
+/** @file libcx/trait/qualifier.hh **/
 
-#ifndef CX_TRAITS_QUALIFIER_HH
-#define CX_TRAITS_QUALIFIER_HH
+#ifndef CX_TRAIT_QUALIFIER_HH
+#define CX_TRAIT_QUALIFIER_HH
 
 #include "libcx/conf/macro.hh"
 
@@ -71,6 +71,9 @@ struct ___add_lref<T, true> { using Type = lref<T>; };
 template<typename T>
 using add_lref = typename ___add_lref<T>::Type;
 
+/** `declv<T>()` yields an rvalue reference to `T` in unevaluated contexts. **/
+template<typename T> cons fn declv() noexce -> add_rref<T>;
+
 template<typename T> proposition is_lref = false;
 template<typename T> proposition is_lref<T&> = true;
 template<typename T> proposition is_rref = false;
@@ -124,4 +127,4 @@ template<typename T>
 using rm_all_extent = copy_cv<T, typename ___rm_all_extent<rm_cv<T>>::Type>;
 
 }       // namespace cx
-#endif  // CX_TRAITS_QUALIFIER_HH
+#endif  // CX_TRAIT_QUALIFIER_HH

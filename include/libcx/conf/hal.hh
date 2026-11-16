@@ -7,33 +7,29 @@
 // Architecture
 // Supported: 32 bit and 64 bit
 
-#ifndef CX_ARCH
-    #define CX_ARCH 1
+#ifndef CX_ARCH_32
     #define CX_ARCH_32 0
+#endif
+#ifndef CX_ARCH_64
     #define CX_ARCH_64 0
 #endif
 
 #if (defined(_WIN64) || defined(__x86_64__) || defined(_M_X64) ||          \
      defined(__64BIT__) || defined(__powerpc64__) || defined(__ppc64__) || \
      defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64))
+    #undef CX_ARCH_32
+    #define CX_ARCH_32 0
     #undef CX_ARCH_64
     #define CX_ARCH_64 1
 #else
     #undef CX_ARCH_32
     #define CX_ARCH_32 1
+    #undef CX_ARCH_64
+    #define CX_ARCH_64 0
 #endif
 
-////////////////////////////////////////////
-// Endianness
-
-#ifndef CX_IS_BIG_ENDIAN
-    #if CX_COMPILER_MSVC
-        #define CX_IS_BIG_ENDIAN 0
-    #elif defined(__BYTE_ORDER__)
-        #define CX_IS_BIG_ENDIAN (__BYTE_ORDER__ == 4321)
-    #else
-        #error "Cannot determine endianness at compile time."
-    #endif
+#ifndef CX_ARCH
+    #define CX_ARCH 1
 #endif
 
 ///////////////////////////////////////////
@@ -42,13 +38,30 @@
 
 #ifndef CX_SYSTEM
     #define CX_SYSTEM 0
+#endif
+#ifndef CX_SYSTEM_WIN
     #define CX_SYSTEM_WIN 0
+#endif
+#ifndef CX_SYSTEM_OSX
     #define CX_SYSTEM_OSX 0
+#endif
+#ifndef CX_SYSTEM_UNIX
     #define CX_SYSTEM_UNIX 0
+#endif
+#ifndef CX_SYSTEM_LINUX
     #define CX_SYSTEM_LINUX 0
+#endif
+#ifndef CX_SYSTEM_FREEBSD
     #define CX_SYSTEM_FREEBSD 0
+#endif
+#ifndef CX_SYSTEM_OPENBSD
     #define CX_SYSTEM_OPENBSD 0
+#endif
+#ifndef CX_SYSTEM_NETBSD
     #define CX_SYSTEM_NETBSD 0
+#endif
+#ifndef CX_SYSTEM_HAIKU
+    #define CX_SYSTEM_HAIKU 0
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -57,6 +70,9 @@
 #elif defined(__APPLE__) && defined(__MACH__)
     #undef CX_SYSTEM_OSX
     #define CX_SYSTEM_OSX 1
+#elif defined(__HAIKU__)
+    #undef CX_SYSTEM_HAIKU
+    #define CX_SYSTEM_HAIKU 1
 #elif defined(__unix__)
     #undef CX_SYSTEM_UNIX
     #define CX_SYSTEM_UNIX 1
@@ -99,9 +115,17 @@
 
 #ifndef CX_COMPILER
     #define CX_COMPILER 0
+#endif
+#ifndef CX_COMPILER_MSVC
     #define CX_COMPILER_MSVC 0
+#endif
+#ifndef CX_COMPILER_CLANG
     #define CX_COMPILER_CLANG 0
+#endif
+#ifndef CX_COMPILER_GCC
     #define CX_COMPILER_GCC 0
+#endif
+#ifndef CX_COMPILER_APPLE
     #define CX_COMPILER_APPLE 0
 #endif
 
@@ -122,17 +146,52 @@
     #error "This compiler is not supported"
 #endif
 
+////////////////////////////////////////////
+// Endianness
+
+#ifndef CX_IS_BIG_ENDIAN
+    #if CX_COMPILER_MSVC
+        #define CX_IS_BIG_ENDIAN 0
+    #elif defined(__BYTE_ORDER__)
+        #define CX_IS_BIG_ENDIAN (__BYTE_ORDER__ == 4321)
+    #else
+        #error "Cannot determine endianness at compile time."
+    #endif
+#endif
+
 ///////////////////////////////////////////
 // CPU, CACHE, SIMD
 
 #ifndef CX_CPU
     #define CX_CPU 1
+#endif
+#ifndef CX_CPU_X86
     #define CX_CPU_X86 0
+#endif
+#ifndef CX_CPU_PPC
     #define CX_CPU_PPC 0
+#endif
+#ifndef CX_CPU_ARM
     #define CX_CPU_ARM 0
+#endif
+#ifndef CX_CPU_MIPS
+    #define CX_CPU_MIPS 0
+#endif
+#ifndef CX_CPU_RISCV
+    #define CX_CPU_RISCV 0
+#endif
+#ifndef CX_SSE2
     #define CX_SSE2 0
+#endif
+#ifndef CX_NEON
     #define CX_NEON 0
+#endif
+#ifndef CX_CACHE_LINE_SIZE
     #define CX_CACHE_LINE_SIZE 0
+#endif
+
+#ifndef CX_TEST
+    #define CX_TEST 0
 #endif
 
 #if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
@@ -187,7 +246,7 @@
 
 #if not CX_SYSTEM_WIN
     #include <stddef.h>
-    #include <stdarg.h>  // XXX:
+    #include <stdarg.h>
 #endif
 
 #if CX_SYSTEM_WIN  // windows
@@ -210,11 +269,11 @@
         #include <windows.h>
 
         // cleanup
-        #ifdef NOMINMAX_FLAG
+        #if defined(NOMINMAX_FLAG)
             #undef NOMINMAX
             #undef NOMINMAX_FLAG
         #endif
-        #ifdef ALREADY_INCLUDED_FLAG
+        #if defined(ALREADY_INCLUDED_FLAG)
             #undef WIN32_LEAN_AND_MEAN
             #undef WIN32_MEAN_AND_LEAN
             #undef VC_EXTRALEN
@@ -383,7 +442,7 @@ typedef i16 b16;
 typedef i32 b32;
 
 #if !defined(__cplusplus)
-    #if (defined(CX_COMPILER_MSVC) && _MSC_VER < 1800) ||  \
+    #if (CX_COMPILER_MSVC && _MSC_VER < 1800) ||  \
         (!defined(_MSC_VER) && !defined(__STDC_VERSION__))
         #ifndef true
             #define true (0 == 0)
@@ -528,6 +587,64 @@ typedef i32 b32;
 #endif
 
 ////////////////////////////////////////////
+// Core text macros
+
+#ifndef LIBCX
+    #define LIBCX namespace cx
+#endif
+#ifndef NS_
+    #define NS_(name) name::
+#endif
+#ifndef STR_
+    #define CX__STR_(x) #x
+    #define STR_(x) CX__STR_(x)
+#endif
+#ifndef VA_
+    #define VA_(...) __VA_ARGS__
+#endif
+#ifndef CX_LINE
+    #define CX_LINE __LINE__
+#endif
+#ifndef CX_FILE
+    #define CX_FILE __FILE__
+#endif
+#ifndef CX_FUNCTION
+    #if CX_COMPILER_CLANG || CX_COMPILER_GCC
+        #define CX_FUNCTION __PRETTY_FUNCTION__
+    #elif CX_COMPILER_MSVC
+        #define CX_FUNCTION __FUNCSIG__
+    #else
+        #define CX_FUNCTION __func__
+    #endif
+#endif
+
+#ifndef CX_JOIN
+    #define CX_JOIN 1
+    #define CX__JOIN2(a, b) a##b
+    #define CX_JOIN2(a, b) CX__JOIN2(a, b)
+    #define CX_JOIN3(a, b, c) CX_JOIN2(CX_JOIN2(a, b), c)
+    #define CX_JOIN4(a, b, c, d) CX_JOIN2(CX_JOIN2(CX_JOIN2(a, b), c), d)
+#endif
+
+#ifndef CX_UNIQ
+    #define CX__UNIQ(a, b) CX_JOIN2(a, b)
+    #define CX_UNIQ(base) CX__UNIQ(base, __COUNTER__)
+#endif
+
+////////////////////////////////////////////
+// Diagnostic modes
+
+#ifndef CX_DEBUG_ENABLED
+    #define CX_DEBUG_ENABLED 1
+#endif
+#ifndef CX_ASSERT_ENABLED
+    #define CX_ASSERT_ENABLED 1
+#endif
+#ifndef CX_PANIC_ENABLED
+    #define CX_PANIC_ENABLED 1
+#endif
+
+////////////////////////////////////////////
 // Assertion handling
 
 #ifndef cx_debug_trap
@@ -560,26 +677,62 @@ typedef i32 b32;
     #endif
 #endif
 
-#ifndef cx_assert_msg
-#define cx_assert_msg(cond, msg, ...)                                             \
-    if (!(cond)) {                                                                \
-        cx_assert_handler("Assertion Failure", STR_(cond), CX_FILE, i64(CX_LINE), \
-                          msg __VA_OPT__(,) __VA_ARGS__);                         \
-        cx_debug_trap;                                                            \
+#ifndef cx_assert_handler
+    #if CX_COMPILER_CLANG || CX_COMPILER_GCC
+        [[gnu::format(printf, 5, 6)]]
+    #endif
+    inline void cx_assert_handler(
+        char const* kind, char const* cond, char const* file, i64 line, char const* msg, ...
+    ) noexcept {
+        // TODO:(manu) Avoid this default definition.
+        (void)kind; (void)cond; (void)file; (void)line; (void)msg;
+        cx_debug_trap();
     }
 #endif
 
-#ifdef CX_DISABLE_ASSERT
-#   define cx_assert(cond) cx_unused(cond)
+#if CX_PANIC_ENABLED
+    #ifndef cx_panic
+        #define cx_panic(msg, ...)                                              \
+            do {                                                                \
+                cx_assert_handler("Panic", "", CX_FILE, i64(CX_LINE),           \
+                                  msg __VA_OPT__(,) __VA_ARGS__);               \
+                cx_debug_trap();                                                \
+            } while (0)
+    #endif
+#else
+    #ifndef cx_panic
+        #define cx_panic(...)
+    #endif
 #endif
 
-#ifndef cx_assert
-    #define cx_assert(cond) cx_assert_msg(cond, null);
+#ifndef cx_assert_msg
+    #define cx_assert_msg(cond, msg, ...)                                       \
+        do {                                                                    \
+            if (!(cond)) {                                                      \
+                cx_assert_handler("Assertion Failure", STR_(cond), CX_FILE,     \
+                                  i64(CX_LINE), msg __VA_OPT__(,) __VA_ARGS__); \
+                cx_debug_trap();                                                \
+            }                                                                   \
+        } while (0)
 #endif
 
-#ifndef cx_panic
-    #define cx_panic(msg, ...) \
-        cx_assert_handler("Panic", null, CX_FILE, i64(CX_LINE), msg __VA_OPT__(,) __VA_ARGS__);
+#if CX_ASSERT_ENABLED
+    #ifndef cx_assert
+        #define cx_assert(cond) cx_assert_msg(cond, "")
+    #endif
+#else
+    #ifndef cx_assert
+        #define cx_assert(cond)
+    #endif
+#endif
+
+#ifndef cx_assert_hard
+    #define cx_assert_hard(cond, msg, ...)                                      \
+        do {                                                                    \
+            if (!(cond)) {                                                      \
+                cx_panic(msg __VA_OPT__(,) __VA_ARGS__);                        \
+            }                                                                   \
+        } while (0)
 #endif
 
 #endif  // CX_CONF_HAL_HH
