@@ -7,6 +7,7 @@
 #include "libcx/arr/static_array.hh"
 #include "libcx/mem/multi.hh"
 #include "libcx/concept/multi.hh"
+#include "libcx/concept/type.hh"
 #include "libcx/uti/typeseq.hh"
 #include "libcx/uti/tuple.hh"
 #include "libcx/uti/utilities.hh"
@@ -33,7 +34,7 @@ inline namespace arr {
     @nota
     - Runtime row access is supported, but it is intended as a fallback path.
 **/
-template<SomeAllocator A, PlainZeroInitble... Ts> requires (va_size(Ts) > 1)
+template<SomeAllocator A, PlainPassiveValue... Ts> requires (va_size(Ts) > 1)
 struct Soa {
     using Types = TypeSeq<Ts...>;
     using Self = Soa<A, Ts...>;
@@ -128,7 +129,7 @@ fn get_elm(SomeSoa auto& arr, isize col) -> TypeAt<Row, typename types_in(arr)>&
     @ret
     - The generated `ErrorCode` if any, `null` otherwise.
 **/
-template<PlainZeroInitble... Ts>
+template<PlainPassiveValue... Ts>
 fn reserve(Soa<HeapAllocator, Ts...>& arr, isize wanted_cap) -> ErrorCode
 {
     if (wanted_cap <= arr.cap) {
@@ -147,7 +148,7 @@ fn reserve(Soa<HeapAllocator, Ts...>& arr, isize wanted_cap) -> ErrorCode
     @nota
     - The capacity grows by repeated doubling.
 **/
-template<PlainZeroInitble... Ts>
+template<PlainPassiveValue... Ts>
 fn ensure_capacity(Soa<HeapAllocator, Ts...>& arr, isize req_len) -> ErrorCode
 {
     if (req_len <= arr.cap) {
@@ -173,7 +174,7 @@ fn ensure_capacity(Soa<HeapAllocator, Ts...>& arr, isize req_len) -> ErrorCode
     - Binds each typed row pointer inside `arr.ptrs`.
     - Resets `len` to `0` and sets `cap` to `new_cap`.
 **/
-template<PlainZeroInitble... Ts>
+template<PlainPassiveValue... Ts>
 fn alloc(
     Soa<HeapAllocator, Ts...>&  arr,
     isize                       new_cap,
@@ -219,7 +220,7 @@ fn alloc(
     - Rebinds each typed row pointer inside `arr.ptrs`.
     - Zeroes the newly allocated tail when `AllocFlags_Zero` is set.
 **/
-template<PlainZeroInitble... Ts>
+template<PlainPassiveValue... Ts>
 fn resize(
     Soa<HeapAllocator, Ts...>&  arr,
     isize                       new_cap,
@@ -269,7 +270,7 @@ fn resize(
     @nota
     - Clears all typed row pointers and resets length/capacity.
 **/
-template<PlainZeroInitble... Ts>
+template<PlainPassiveValue... Ts>
 fn free(Soa<HeapAllocator, Ts...>& arr) -> ErrorCode
 {
     mutaptr ptr = base_ptr(arr);

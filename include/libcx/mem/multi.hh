@@ -14,6 +14,7 @@
 
 #include "libcx/arr/static_array.hh"
 #include "libcx/math/math.hh"
+#include "libcx/concept/lifetime.hh"
 #include "libcx/mem/common.hh"
 #include "libcx/mem/__alloc_typed.hh"
 #include "libcx/uti/typeseq.hh"
@@ -218,7 +219,7 @@ inln fn multi_mem_take(mutaptr dst, mutaptr src, isize num) -> void
     - This is a raw memory operation.
     - Zeroing memory is not the same operation as constructing objects.
 **/
-template<ZeroInitble... Ts>
+template<PassiveValue... Ts>
 inln fn multi_mem_zero(mutaptr ptr, isize cap, isize beg, isize num) -> void
 {
     isize off = 0;

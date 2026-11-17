@@ -24,7 +24,7 @@ template<typename U> concept SomePlainArithmetic = is_arithmetic<U> && !is_cv_qu
 template<typename T>
 concept SomePlainRawPointer = SomeRawPointer<T> && !is_cv_qual<T> && !is_cv_qual<rm_ptr<T>>;
 
-template<typename T> concept PlainZeroInitble = is_zero_initble<T> && !is_cv_qual<T>;
+template<typename T> concept PlainPassiveValue = is_passive_value<T> && !is_cv_qual<T>;
 
 }       // namespace uti
 }       // namespace cx

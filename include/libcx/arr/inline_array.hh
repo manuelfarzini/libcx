@@ -3,6 +3,7 @@
 #ifndef CX_ARR_INLINE_ARRAY_HH
 #define CX_ARR_INLINE_ARRAY_HH
 
+#include "libcx/trait/lifetime.hh"
 #include "libcx/uti/utilities.hh"
 #include "libcx/mem/common.hh"
 
@@ -15,7 +16,7 @@ template<typename Tp, usize Cap, typename Sz = usize>
 struct InlineArray
 {
     static_assert(Cap > 0, "Array capacity must be greater than zero");
-    static_assert(is_zero_initble<Tp>, "Element type `T` must be zero initializable");
+    static_assert(is_value_initble<Tp>, "Element type `T` must be value initializable");
     CX_DEFINE_MEMBER_TYPES(Tp, Sz);
     using Self = InlineArray<Elem, Cap, Size>;
 

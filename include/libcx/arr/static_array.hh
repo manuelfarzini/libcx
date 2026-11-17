@@ -11,7 +11,7 @@
 namespace cx {
 inline namespace arr {
 
-template<ZeroInitble E, isize Cap, typename S = isize> with (Cap > 0)
+template<ValueInitble E, isize Cap, typename S = isize> with (Cap > 0)
 struct StaticArray
 {
     CX_DEFINE_MEMBER_TYPES(E, S);
@@ -32,7 +32,7 @@ struct StaticArray
 CX_CONCEPT_GEN_TEMPL(StaticArray, is_static_array, SomeStaticArray,
                      VA_(typename Tp, usize Cap, typename Sz), VA_(Tp, Cap, Sz));
 
-template<ZeroInitble E> StaticArray(E) -> StaticArray<E, 1>;
+template<ValueInitble E> StaticArray(E) -> StaticArray<E, 1>;
 
 // TODO: convertible_to to bind to the first passed element type e.g. `StaticArray arr = {1u, 2, 3}`
 template<typename E, typename... Es>

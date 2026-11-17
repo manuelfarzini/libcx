@@ -19,56 +19,57 @@ struct RevIterator {
 
     cons Iter base(this auto const& self) noexce { return self.cur; }
 
-    cons fn operator*(this auto const& self) noexce->declt(auto)
+    cons fn operator*(this auto const& self) noexce -> declt(auto)
     {
         auto tmp = self.cur;
         --tmp;
         return *tmp;
     }
 
-    cons fn operator->(this auto const& self) noexce->auto
+    cons fn operator->(this auto const& self) noexce -> auto
     {
         return &(*self);  // XXX: proxy?
     }
 
-    cons fn operator++(this auto& self) noexce->declt(self)
+    cons fn operator++(this auto& self) noexce -> declt(self)
     {
         --self.cur;
         return self;
     }
 
-    cons fn operator++(this auto& self, int) noexce->auto
+    cons fn operator++(this auto& self, int) noexce -> auto
     {
         auto tmp = self;
         --self.cur;
         return tmp;
     }
 
-    cons fn operator--(this auto& self) noexce->declt(self)
+    cons fn operator--(this auto& self) noexce -> declt(self)
     {
         ++self.cur;
         return self;
     }
 
-    cons fn operator--(this auto& self, int) noexce->auto
+    cons fn operator--(this auto& self, int) noexce -> auto
     {
         auto tmp = self;
         ++self.cur;
         return tmp;
     }
 
-    friend cons fn operator==(RevIterator const& a, RevIterator const& b) noexce->b32
+    friend cons fn operator==(RevIterator const& a, RevIterator const& b) noexce -> b32
     {
         return a.cur == b.cur;
     }
 
-    friend cons fn operator!=(RevIterator const& a, RevIterator const& b) noexce->b32
+    friend cons fn operator!=(RevIterator const& a, RevIterator const& b) noexce -> b32
     {
         return !(a == b);
     }
 };
 
-template<typename It> cons auto rev_iterator(It it) noexce -> RevIterator<It>
+template<typename It>
+cons fn rev_iterator(It it) noexce -> RevIterator<It>
 {
     return RevIterator<It>(it);
 }

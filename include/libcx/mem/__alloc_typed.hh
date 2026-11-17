@@ -6,6 +6,7 @@
 #include "libcx/conf/type.hh"
 #include "libcx/conf/prelude.hh"
 #include "libcx/trait/types.hh"
+#include "libcx/concept/lifetime.hh"
 #include "libcx/mem/common.hh"
 #include "libcx/mem/pointer.hh"
 
@@ -312,7 +313,7 @@ ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
     return {aligned_mem, none};
 }
 
-template<ZeroInitble T>
+template<PassiveValue T>
 cons fn aligned_alloc_type(HeapAllocator alc, isize num) -> Res<T*, ErrorCode>
 {
     auto [ptr, err] = aligned_alloc(alc, num * size_of(T), align_of(T)) or_return {null, err};

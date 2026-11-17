@@ -6,104 +6,6 @@
 #include "libcx/conf/hal.hh"
 
 ////////////////////////////////////////////
-// Syntax
-
-#ifndef or_return
-    #define or_return ; if (err) return
-#endif
-#ifndef or_else
-    #define or_else ; if (err)
-#endif
-#ifndef or_continue
-    #define or_continue ; if (err) continue
-#endif
-#ifndef or_break
-    #define or_break ; if (err) break
-#endif
-#ifndef or_goto
-    #define or_goto ; if (err) goto
-#endif
-
-#ifndef nodisc
-    #define nodisc [[nodiscard]]
-#endif
-#ifndef noret
-    #define noret [[noreturn]]
-#endif
-#ifndef like
-    #define like [[likely]]
-#endif
-#ifndef unlike
-    #define unlike [[unlikely]]
-#endif
-#ifndef cx_assume
-    #define cx_assume(...) [[assume(__VA_ARGS__)]]
-#endif
-#ifndef cx_no_uniq_addr
-    #if CX_COMPILER_CLANG || CX_COMPILER_GCC
-        #define cx_no_uniq_addr [[no_unique_address]]
-    #else
-        #define cx_no_uniq_addr [[msvc::no_unique_address]]
-    #endif
-#endif
-
-#ifndef priv  // internal linkage procedures and variables
-    #define priv static
-#endif
-#ifndef glob  // global variables or static members
-    #define glob static
-#endif
-#ifndef persist  // persistent local variables
-    #define persist static
-#endif
-#ifndef onedef  // single variable across translation units
-    #define onedef inline
-#endif
-
-#ifndef fn
-    #define fn inline auto
-#endif
-#ifndef noexce
-    #define noexce noexcept
-#endif
-#ifndef with
-    #define with requires
-#endif
-#ifndef proc
-    #define proc(_name_, ...) inline auto _name_(__VA_ARGS__) noexcept ->
-#endif
-#ifndef func
-    #define func auto
-#endif
-#ifndef clos
-    #define clos auto
-#endif
-#ifndef comp
-    #define comp consteval
-#endif
-#ifndef cons
-    #define cons constexpr
-#endif
-#ifndef proposition
-    #define proposition inline constexpr bool
-#endif
-
-#ifndef cast
-    #define cast(Type, v) ((Type) (v))
-#endif
-#ifndef nil
-    #define nil (void*) nullptr
-#endif
-
-#ifndef cx_unused
-    #define cx_unused(x) (void) x
-#endif
-
-#ifndef declt
-    #define declt(x) decltype(x)
-#endif
-
-////////////////////////////////////////////
 // Attributes and decorators
 
 #ifndef CX_HIDE
@@ -183,13 +85,110 @@
     #endif
 #endif
 
-
 #ifndef CX_PRINTF_ARGS
     #if CX_COMPILER_GCC or CX_COMPILER_CLANG
         #define CX_PRINTF_ARGS(fmt) __attribute__((format(printf, fmt, (fmt + 1))))
     #else
         #define CX_PRINTF_ARGS(fmt)
     #endif
+#endif
+
+#ifndef nodisc
+    #define nodisc [[nodiscard]]
+#endif
+#ifndef noret
+    #define noret [[noreturn]]
+#endif
+#ifndef like
+    #define like [[likely]]
+#endif
+#ifndef unlike
+    #define unlike [[unlikely]]
+#endif
+#ifndef cx_assume
+    #define cx_assume(...) [[assume(__VA_ARGS__)]]
+#endif
+#ifndef cx_no_uniq_addr
+    #if CX_COMPILER_CLANG || CX_COMPILER_GCC
+        #define cx_no_uniq_addr [[no_unique_address]]
+    #else
+        #define cx_no_uniq_addr [[msvc::no_unique_address]]
+    #endif
+#endif
+
+////////////////////////////////////////////
+// Syntax
+
+#ifndef or_return
+    #define or_return ; if (err) unlike return
+#endif
+#ifndef or_else
+    #define or_else ; if (err) unlike
+#endif
+#ifndef or_continue
+    #define or_continue ; if (err) continue
+#endif
+#ifndef or_break
+    #define or_break ; if (err) break
+#endif
+#ifndef or_goto
+    #define or_goto ; if (err) goto
+#endif
+
+#ifndef priv  // internal linkage procedures and variables
+    #define priv static
+#endif
+#ifndef glob  // global variables or static members
+    #define glob static
+#endif
+#ifndef persist  // persistent local variables
+    #define persist static
+#endif
+#ifndef onedef  // single variable across translation units
+    #define onedef inline
+#endif
+
+#ifndef fn
+    #define fn inline auto
+#endif
+#ifndef noexce
+    #define noexce noexcept
+#endif
+#ifndef with
+    #define with requires
+#endif
+#ifndef proc
+    #define proc(_name_, ...) inline auto _name_(__VA_ARGS__) noexcept ->
+#endif
+#ifndef func
+    #define func auto
+#endif
+#ifndef clos
+    #define clos auto
+#endif
+#ifndef comp
+    #define comp consteval
+#endif
+#ifndef cons
+    #define cons constexpr
+#endif
+#ifndef proposition
+    #define proposition inline constexpr bool
+#endif
+
+#ifndef cast
+    #define cast(Type, v) ((Type) (v))
+#endif
+#ifndef nil
+    #define nil (void*) nullptr
+#endif
+
+#ifndef cx_unused
+    #define cx_unused(x) (void) x
+#endif
+
+#ifndef declt
+    #define declt(x) decltype(x)
 #endif
 
 ////////////////////////////////////////////

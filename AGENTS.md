@@ -51,11 +51,32 @@ Use `include/libcx/arr/` as the reference for style and API design.
   }
   ```
 
+- Keep simple propositions and concepts inline. For propositions whose
+  `requires` expressions would be noisy inline, use the compact braced form:
+
+  ```cpp
+  template<typename T> proposition is_value_initble = {
+      is_def_initble<T> &&
+      requires { T(); }
+  };
+  ```
+
+  Do not expand a proposition merely because it composes several simple
+  traits. Short trait or proposition declarations may slightly exceed the
+  100-column limit when that keeps them inline.
 - Maximum line length is 100 columns; otherwise follow the surrounding style.
 - Handle errors explicitly with Go-style multiple returns: `Res<Ts...>` is
   an alias for `Tuple<Ts...>`, using `ErrorCode` explicitly.
 - No exceptions, RTTI, implicit allocations, or revival of the experimental
   `ResultPair`/error-pointer system.
+
+## Memory and errors
+
+- `PassiveValue` containers favor explicit memory operations and trivial
+  copying over placement construction.
+- Prefer libcx's own memory utilities over unnecessary standard library
+  facilities.
+- Prefer `or_return` and `or_else` for idiomatic error handling.
 
 ## Headers
 

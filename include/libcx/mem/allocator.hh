@@ -137,6 +137,7 @@ inln fn heap_alloc_aligned(
     if (align < DEF_ALIGN) {
         align = DEF_ALIGN;
     }
+    // XXX:(manu)
     // cx_assert(is_power_of_two(align) && "`align` must be a power of 2");
 
     isize space = PTR_SIZE + (align - 1) + size;
@@ -156,91 +157,6 @@ inln fn heap_free_aligned(mutaptr ptr) noexce -> void
         heap_free(cast(void**, ptr)[-1]);
     }
 }
-
-// XXX:(manu)
-// Alternative manual resize for future benchmarks: reallocate the base block
-// with `heap_resize` and realign the payload when `align <= DEF_ALIGN`;
-// otherwise fall back to allocate-copy-free. Not used by the initial strategy.
-
-#elif CX_SYSTEM_WIN
-// The CRT aligned allocator supports arbitrary power-of-two over-alignment and
-// has a matching `_aligned_free`; `HeapAlloc` only guarantees the process heap
-// allocation alignment.
-
-inln fn heap_alloc_aligned(
-    isize      size,
-    isize      align,
-    AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
-    if (size <= 0) {
-        return {null, Invalid_Arg};
-    }
-    if (align < DEF_ALIGN) {
-        align = DEF_ALIGN;
-    }
-    // cx_assert(is_power_of_two(align) && "`align` must be a power of 2");
-
-    mutaptr ptr = ::_aligned_malloc(usize(size), usize(align));
-    if (ptr == null) {
-        return {null, Alloc_Exhausted};
-    }
-    if (flags & AllocFlag_Zero) {
-        auto err = mem_zero(ptr, size);
-        if (err) {
-            ::_aligned_free(ptr);
-            return {null, err};
-        }
-    }
-    return {ptr, Error_None};
-}
-
-inln fn heap_free_aligned(mutaptr ptr) noexce -> void
-{
-    if (ptr != null) {
-        ::_aligned_free(ptr);
-    }
-}
-
-#else
-
-// `posix_memalign` is available on Linux, macOS, and the BSDs and, unlike C11
-// `aligned_alloc`, does not require `size` to be a multiple of `align`.
-inln fn heap_alloc_aligned(
-    isize      size,
-    isize      align,
-    AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
-    if (size <= 0) {
-        return {null, Invalid_Arg};
-    }
-    if (align < DEF_ALIGN) {
-        align = DEF_ALIGN;
-    }
-    // cx_assert(is_power_of_two(align) && "`align` must be a power of 2");
-
-    mutaptr ptr = null;
-    int err = ::posix_memalign(&ptr, usize(align), usize(size));
-    if (err != 0) {
-        return {null, err == ENOMEM ? Alloc_Exhausted : Invalid_Arg};
-    }
-    if (flags & AllocFlag_Zero) {
-        auto zero_err = mem_zero(ptr, size);
-        if (zero_err) {
-            ::free(ptr);
-            return {null, zero_err};
-        }
-    }
-    return {ptr, Error_None};
-}
-
-inln fn heap_free_aligned(mutaptr ptr) noexce -> void
-{
-    if (ptr != null) {
-        ::free(ptr);
-    }
-}
-
-#endif
 
 inln fn heap_resize_aligned(
     mutaptr    old_ptr,
@@ -278,6 +194,164 @@ inln fn heap_resize_aligned(
     heap_free_aligned(old_ptr);
     return {new_ptr, Error_None};
 }
+
+// NOTE:(manu)
+// Alternative manual resize for future benchmarks: reallocate the base block
+// with `heap_resize` and realign the payload when `align <= DEF_ALIGN`;
+// otherwise fall back to allocate-copy-free. Not used by the initial strategy.
+
+#elif CX_SYSTEM_WIN
+// The CRT aligned allocator supports arbitrary power-of-two over-alignment and
+// has a matching `_aligned_free`; `HeapAlloc` only guarantees the process heap
+// allocation alignment.
+
+inln fn heap_alloc_aligned(
+    isize      size,
+    isize      align,
+    AllocFlag  flags
+) noexce -> Res<mutaptr, ErrorCode> {
+    if (size <= 0) {
+        return {null, Invalid_Arg};
+    }
+    if (align < DEF_ALIGN) {
+        align = DEF_ALIGN;
+    }
+    // XXX:(manu)
+    // cx_assert(is_power_of_two(align) && "`align` must be a power of 2");
+
+    mutaptr ptr = ::_aligned_malloc(usize(size), usize(align));
+    if (ptr == null) {
+        return {null, Alloc_Exhausted};
+    }
+    if (flags & AllocFlag_Zero) {
+        auto err = mem_zero(ptr, size);
+        if (err) {
+            ::_aligned_free(ptr);
+            return {null, err};
+        }
+    }
+    return {ptr, Error_None};
+}
+
+inln fn heap_resize_aligned(
+    mutaptr    old_ptr,
+    isize      old_size,
+    isize      new_size,
+    isize      align,
+    AllocFlag  flags
+) noexce -> Res<mutaptr, ErrorCode> {
+    if (old_ptr == null) {
+        return heap_alloc_aligned(new_size, align, flags);
+    }
+    if (new_size <= 0 || old_size < 0) {
+        return {old_ptr, Invalid_Arg};
+    }
+    if (new_size <= old_size) {
+        return {old_ptr, Error_None};
+    }
+    if (align < DEF_ALIGN) {
+        align = DEF_ALIGN;
+    }
+
+    mutaptr ptr = ::_aligned_realloc(old_ptr, usize(new_size), usize(align));
+    if (ptr == null) {
+        return {old_ptr, Alloc_Exhausted};
+    }
+    if (flags & AllocFlag_Zero) {
+        auto err = mem_zero(ptr_add(ptr, old_size), new_size - old_size);
+        if (err) {
+            ::_aligned_free(ptr);
+            return {null, err};
+        }
+    }
+    return {ptr, Error_None};
+}
+
+inln fn heap_free_aligned(mutaptr ptr) noexce -> void
+{
+    if (ptr != null) {
+        ::_aligned_free(ptr);
+    }
+}
+
+#else
+
+// `posix_memalign` is available on Linux, macOS, and the BSDs and, unlike C11
+// `aligned_alloc`, does not require `size` to be a multiple of `align`.
+inln fn heap_alloc_aligned(
+    isize      size,
+    isize      align,
+    AllocFlag  flags
+) noexce -> Res<mutaptr, ErrorCode> {
+    if (size <= 0) {
+        return {null, Invalid_Arg};
+    }
+    if (align < DEF_ALIGN) {
+        align = DEF_ALIGN;
+    }
+    // XXX:(manu)
+    // cx_assert(is_power_of_two(align) && "`align` must be a power of 2");
+
+    mutaptr ptr = null;
+    int err = ::posix_memalign(&ptr, usize(align), usize(size));
+    if (err != 0) {
+        return {null, err == ENOMEM ? Alloc_Exhausted : Invalid_Arg};
+    }
+    if (flags & AllocFlag_Zero) {
+        auto zero_err = mem_zero(ptr, size);
+        if (zero_err) {
+            ::free(ptr);
+            return {null, zero_err};
+        }
+    }
+    return {ptr, Error_None};
+}
+
+inln fn heap_free_aligned(mutaptr ptr) noexce -> void
+{
+    if (ptr != null) {
+        ::free(ptr);
+    }
+}
+
+inln fn heap_resize_aligned(
+    mutaptr    old_ptr,
+    isize      old_size,
+    isize      new_size,
+    isize      align,
+    AllocFlag  flags
+) noexce -> Res<mutaptr, ErrorCode> {
+    if (old_ptr == null) {
+        return heap_alloc_aligned(new_size, align, flags);
+    }
+    if (new_size <= 0 || old_size < 0) {
+        return {old_ptr, Invalid_Arg};
+    }
+    if (new_size <= old_size) {
+        return {old_ptr, Error_None};
+    }
+
+    auto [new_ptr, err] = heap_alloc_aligned(new_size, align, flags & ~AllocFlag_Zero);
+    if (err) {
+        return {old_ptr, err};
+    }
+
+    if (old_size > 0) {
+        mem_copy(new_ptr, old_ptr, old_size);
+    }
+    if (flags & AllocFlag_Zero) {
+        err = mem_zero(ptr_add(new_ptr, old_size), new_size - old_size);
+        if (err) {
+            heap_free_aligned(new_ptr);
+            return {old_ptr, err};
+        }
+    }
+
+    heap_free_aligned(old_ptr);
+    return {new_ptr, Error_None};
+}
+
+#endif
 
 fn heap_allocator_proc(
     mutaptr    data,
@@ -322,7 +396,7 @@ struct Arena
 
 fn arena_init(Arena& a, isize cap) noexce -> ErrorCode
 {
-    auto [ptr, err] = mem_alloc(heap_allocator(), cap, DEF_ALIGN, AllocFlag_Default);
+    auto [ptr, err] = mem_alloc(heap_allocator(), cap, DEF_ALIGN, AllocFlag_None);
     if (err) {
         return err;
     }
@@ -359,6 +433,7 @@ fn arena_allocator_proc(
         if (align < DEF_ALIGN) {
             align = DEF_ALIGN;
         }
+        // XXX:(manu)
         // cx_assert(is_power_of_two(align) && "`align` must be a power of 2");
 
         byteptr base = arena.data + arena.pos;
@@ -389,6 +464,27 @@ fn arena_allocator_proc(
         if (size <= 0 || old_size < 0) {
             return {old_ptr, Invalid_Arg};
         }
+
+        // Resize the most recent allocation in place.
+        if (byteptr(old_ptr) + old_size == arena.data + arena.pos) {
+            if (size > old_size) {
+                isize extra = size - old_size;
+                if (extra > arena.cap - arena.pos) {
+                    return {old_ptr, Alloc_Exhausted};
+                }
+                if (flags & AllocFlag_Zero) {
+                    auto err = mem_zero(ptr_add(old_ptr, old_size), extra);
+                    if (err) {
+                        return {old_ptr, err};
+                    }
+                }
+                arena.pos += extra;
+            } else {
+                arena.pos -= old_size - size;
+            }
+            return {old_ptr, Error_None};
+        }
+
         if (size <= old_size) {
             return {old_ptr, Error_None};
         }

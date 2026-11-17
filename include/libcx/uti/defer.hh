@@ -40,8 +40,8 @@ inln cons fn defer_wrapper(F&& f) noexce -> DeferWrapper<F>
                         : (_cx_dl_once_ = 0, 0))
 #endif
 
-#ifndef cx_defer_loop_stop
-#define cx_defer_loop_stop() _cx_dl_stop_ = 1
+#ifndef cx_dl_stop
+#define cx_dl_stop() _cx_dl_stop_ = 1
 #endif
 
 }       // namespace uti
@@ -58,7 +58,7 @@ fn test() -> void
         x += 1;
         printf("inside");
         if (x == 3) {
-            cx_defer_loop_stop();
+            cx_dl_stop();
         }
     }
 }
@@ -69,7 +69,7 @@ fn test() -> void
         auto c = fgetc(f);
         printf("inside");
         if (c == '#') {
-            cx_defer_loop_stop();
+            cx_dl_stop();
         }
     }
 }

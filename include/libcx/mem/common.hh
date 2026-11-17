@@ -11,7 +11,7 @@
 #include "libcx/uti/tuple.hh"
 
 #ifndef CX_ENABLE_PLACEMENT
-    #define CX_ENABLE_PLACEMENT 0
+    #define CX_ENABLE_PLACEMENT 1
 #endif
 
 #if CX_ENABLE_PLACEMENT
@@ -32,7 +32,6 @@ onedef cons isize DEF_ALIGN = 2 * MAX_ALIGN;
 
 static_assert(MAX_ALIGN % PTR_ALIGN == 0, "`MAX_ALIGN` must be a multiple of `ptr_align`");
 static_assert((MAX_ALIGN & (MAX_ALIGN - 1)) == 0, "`MAX_ALIGN` must be a power of 2");
-static_assert(DEF_ALIGN == 8  || DEF_ALIGN == 16, "`DEF_ALIGN` should be 8 or 16");
 
 /** Predicate that is `true` if `Tp` requires more alignment than `max_align_t`. **/
 template<typename Tp>
@@ -263,7 +262,7 @@ cons fn mem_zero_condition(mutaptr data, isize size) -> ErrorCode
     @pre
     - Sufficient, properly aligned storage at `ptr`.
 **/
-template<ZeroInitble T>
+template<ValueInitble T>
 nodisc inln cons fn init_type(mutaptr ptr, isize num) noexce -> ErrorCode
 {
     if (num == 0) {
@@ -294,7 +293,7 @@ nodisc inln cons fn init_type(mutaptr ptr, isize num) noexce -> ErrorCode
     @note
     - `args` are reused `num` times so they are taken by `const&` not forwarded.
 **/
-template<ZeroInitble T, typename... Args>
+template<typename T, typename... Args>
 nodisc cons fn init_va(
     mutaptr ptr, isize num, Args const&... args
 ) noexce -> Res<T*, ErrorCode>
@@ -367,7 +366,7 @@ nodisc fn deinit_ty(T* ptr, isize num) noexce -> ErrorCode
     if (num == 0) {
         return Invalid_Arg;
     }
-    if constexpr (is_zero_initble<T>) {
+    if constexpr (is_triv_dtble<T>) {
         return none;
     } else {
         for (isize i = 0; i < num; i++) {
