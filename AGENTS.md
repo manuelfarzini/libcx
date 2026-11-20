@@ -74,6 +74,8 @@ Use `include/libcx/arr/` as the reference for style and API design.
 
 - `PassiveValue` containers favor explicit memory operations and trivial
   copying over placement construction.
+- Generic passive-value initialization copies a single template value; keep
+  raw allocation, byte zeroing, and value-initialization distinct.
 - Prefer libcx's own memory utilities over unnecessary standard library
   facilities.
 - Prefer `or_return` and `or_else` for idiomatic error handling.

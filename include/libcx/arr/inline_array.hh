@@ -133,7 +133,7 @@ cons fn push_back(Arr& arr, Size num, Args&&... args) noexce -> ErrorCode
     if (num == 0) {
         return false;
     }
-    auto [_, err] = init_varg<ElemIn<Arr>>(&arr.buf[arr.len], num, args...) or_return Operation_Fail;
+    auto [_, err] = init_args<ElemIn<Arr>>(&arr.buf[arr.len], num, args...) or_return Operation_Fail;
     arr.len += num;
     return none;
 }
@@ -158,7 +158,6 @@ fn pop_back(Arr& arr, Elm& res) noexce -> bool
         return false;
     }
     res = arr[arr.len - 1];
-    deinit_ty<ElemIn<Arr>>(&arr.buf[arr.len - 1]);  // trival dtble → nop
     arr.len--;
     return true;
 }

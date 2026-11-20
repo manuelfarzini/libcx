@@ -11,13 +11,19 @@
 #include "libcx/uti/tuple.hh"
 
 #ifndef CX_ENABLE_PLACEMENT
-    #define CX_ENABLE_PLACEMENT 1
+    #define CX_ENABLE_PLACEMENT 0
 #endif
 
 #if CX_ENABLE_PLACEMENT
 
-CX_HIDE nodisc cons fn operator new(usize, mutaptr __p) noexce -> mutaptr { return __p; }
-CX_HIDE        cons fn operator delete(mutaptr, mutaptr)  noexce -> void  {             }
+struct PlaceTag {};
+
+CX_HIDE nodisc cons fn operator new(usize, mutaptr __p, PlaceTag)  noexce -> mutaptr { return __p; }
+CX_HIDE        cons fn operator delete(mutaptr, mutaptr, PlaceTag) noexce -> void    {             }
+
+#ifndef cx_new
+    #define cx_new(__p) ::new(__p, PlaceTag{})
+#endif
 
 #endif
 
@@ -251,128 +257,98 @@ cons fn mem_zero_condition(mutaptr data, isize size) -> ErrorCode
     return none;
 }
 
-/** 
-    Zero intializes `num` contiguous `T` objects at `ptr`.
-    @arg
-    - `ptr`: the pointer to the first element
-    - `num`: the number of elements
-    @ret
-    - `[null, err]` if `ptr == null` or `num` == `0`;
-    - `[ptr, none]` otherwise.
-    @pre
-    - Sufficient, properly aligned storage at `ptr`.
-**/
-template<ValueInitble T>
-nodisc inln cons fn init_type(mutaptr ptr, isize num) noexce -> ErrorCode
-{
-    if (num == 0) {
-        return Invalid_Arg;
-    }
-    if (ptr == null) {
-        return Invalid_Ptr;
-    }
-
-    for (isize i = 0; i < num; i++) {
-        ::new (cast(T*, ptr) + i) T();
-    }
-
-    return none;
-}
-
 /**
-    Initializes `num` contiguous `T` objects at `ptr` using `args` for each.
+    Value-initializes `num` contiguous objects of type `T` using a single
+    value-initialized instance as a template.
     @arg
-    - `ptr`: the pointer to the first element;
-    - `num`: the number of elements;
-    - `args`: the arguments to the constructor.
-    @ret
-    - `[null, err]` if `ptr == null` or `num` == `0`;
-    - `[ptr, none]` otherwise.
-    @pre
-    - Sufficient, properly aligned storage at `ptr`.
+    - `ptr`: destination storage.
+    - `num`: number of elements to initialize.
+    @req
+    - `ptr` is not null.
+    - `num` is positive.
+    - `ptr` refers to storage sufficient for `num` elements of type `T`.
+    - `ptr` is properly aligned for `T`.
     @note
-    - `args` are reused `num` times so they are taken by `const&` not forwarded.
+    - The template value is initialized with `T{}` and copied using `mem_copy`.
+    - Default member initializers are respected.
 **/
-template<typename T, typename... Args>
-nodisc cons fn init_va(
-    mutaptr ptr, isize num, Args const&... args
-) noexce -> Res<T*, ErrorCode>
-    with is_ctble<T, Args const&...>
+template<PassiveValue T>
+inln cons fn init_value(mutaptr ptr, isize num) noexce -> void
 {
-    if (num == 0) {
-        return {null, Invalid_Arg};
-    }
-    if (ptr == null) {
-        return {null, Invalid_Ptr};
-    }
+    cx_assert(ptr != null && num > 0);
+
+    T value{};
+    T* buf = cast(T*, ptr);
+
     for (isize i = 0; i < num; i++) {
-        ::new (cast(T*, ptr) + i) T{args...};
+        mem_copy(buf + i, &value, 1);
     }
-    return {cast(T*, ptr), none};
 }
 
 /**
-    Create and place `num` contiguous `T` objects given by `list` at `ptr`.
+    Initializes `num` contiguous objects of type `T` using a single instance
+    initialized from `args`.
     @arg
-    - `ptr`: the pointer to the first element;
-    - `list`: the initializer list.
-    @ret
-    - `[null, err]` if `ptr` is `null` or `num` is `0`;
-    - `[ptr, none]` otherwise.
-    @pre
-    - Sufficient, properly aligned storage at `ptr`.
-    @nota
-    - The elements are copied.
+    - `ptr`: destination storage.
+    - `num`: number of elements to initialize.
+    - `args`: arguments used to initialize the template value.
+    @req
+    - `ptr` is not null.
+    - `num` is positive.
+    - `ptr` refers to storage sufficient for `num` elements of type `T`.
+    - `ptr` is properly aligned for `T`.
+    - `T{args...}` is well-formed.
+    @note
+    - The template value is created once and replicated using `mem_copy`.
+    - Arguments are taken by const reference because they are not consumed.
 **/
-template<typename T, typename U>
-cons fn init_ls(mutaptr ptr, initls<U> lst) noexce -> ErrorCode
-    with is_ctble<T, U const&>
+template<PassiveValue T, typename... Args>
+inln cons fn init_args(
+    mutaptr ptr, isize num, Args const&... args
+) noexce -> void
 {
-    if (ptr == null) {
-        return Invalid_Ptr;
-    }
+    cx_assert(ptr != null && num > 0);
 
-    if (lst.size() == 0) {
-        return Invalid_Arg;
-    }
+    T value{args...};
+    T* buf = cast(T*, ptr);
 
+    for (isize i = 0; i < num; i++) {
+        mem_copy(buf + i, &value, 1);
+    }
+}
+
+/**
+    Initializes contiguous objects of type `T` from an initializer list.
+    @arg
+    - `ptr`: destination storage.
+    - `lst`: list of values to copy.
+    @req
+    - `ptr` is not null.
+    - `lst` is not empty.
+    - `ptr` refers to storage sufficient for `lst.size()` elements of type `T`.
+    - `ptr` is properly aligned for `T`.
+    - Source and destination storage do not overlap.
+    - If `T` and `U` differ, `T{elem}` must be well-formed for elements of `U`.
+    @note
+    - Elements are copied directly when `T` and `U` match.
+    - Otherwise, each element is converted to `T` before copying.
+**/
+template<PassiveValue T, typename U>
+inln cons fn init_list(mutaptr ptr, initls<U> lst) noexce -> void
+{
+    cx_assert(ptr != null && lst.size() > 0);
+
+    T* buf = cast(T*, ptr);
     isize i = 0;
-    for (auto const& elem : lst) {
-        ::new (cast(T*, ptr) + i++) T(elem);
-    }
-    return null; 
-}
 
-/**
-    Uninitializes `num` contiguous `T` objects at `ptr`.
-    @arg
-    - `T`: the type of the objects.
-    @arg
-    - `ptr`: the pointer to the objects.
-    - `num`: the number of objects.
-    @ret
-    - `[null, err]` if `ptr == null` or `num == 0`,
-    - `[empty, none]` otherwise.
-    @pre
-    - `ptr` was obtained from `alloc_aligned<T>`.
-    - `ptr` has `num` elements.
-**/
-template<typename T>
-nodisc fn deinit_ty(T* ptr, isize num) noexce -> ErrorCode
-{
-    if (ptr == null) {
-        return Invalid_Ptr;
-    }
-    if (num == 0) {
-        return Invalid_Arg;
-    }
-    if constexpr (is_triv_dtble<T>) {
-        return none;
-    } else {
-        for (isize i = 0; i < num; i++) {
-            ptr[num].~T();
+    for (auto const& elem : lst) {
+        if cons (same_as<T, U>) {
+            mem_copy(buf + i, &elem, 1);
+        } else {
+            T value{elem};
+            mem_copy(buf + i, &value, 1);
         }
-        return none;
+        i++;
     }
 }
 

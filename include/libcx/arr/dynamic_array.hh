@@ -10,6 +10,7 @@
 #include "libcx/uti/compare.hh"
 #include "libcx/uti/iterator.hh"
 #include "libcx/uti/members.hh"
+#include "libcx/mem/common.hh"
 #include "libcx/mem/allocator.hh"
 
 namespace cx {
@@ -93,7 +94,10 @@ operator<=>(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noex
     return 0;
 }
 
-inln priv cons fn _rep_ok(SomeDynamicArray auto const& arr) noexce -> b32
+// TODO:(manu) To be implemented.
+// inln priv cons fn to_string(SomeDynamicArray auto const& arr) noexce -> String;
+
+inln priv cons fn rep_ok(SomeDynamicArray auto const& arr) noexce -> b32
 {
     using Elem = ElemIn<decltype(arr)>;
 
@@ -130,7 +134,7 @@ cons fn make(
         or_return {DynamicArray<E, S>{null, 0, 0, alc}, err};
 
     auto arr = DynamicArray<E, S>{cast(E*, buf), S(0), S(cap), alc};
-    cx_assert(_rep_ok(arr));
+    cx_assert(rep_ok(arr));
     return {arr, null};
 }
 
@@ -152,7 +156,7 @@ cons fn dynamic_array(
     mem_copy(arr.buf, vals, n);
     arr.len = n;
 
-    cx_assert(_rep_ok(arr));
+    cx_assert(rep_ok(arr));
     return {arr, null};
 }
 
@@ -196,7 +200,7 @@ cons fn reserve(Arr& arr, SizeIn<Arr> new_cap) noexce -> ErrorCode
 
     arr.buf = cast(Elem*, buf);
     arr.cap = new_cap;
-    cx_assert(_rep_ok(arr));
+    cx_assert(rep_ok(arr));
     return null;
 }
 
@@ -212,12 +216,11 @@ cons fn resize(Arr& arr, SizeIn<Arr> new_len) noexce -> ErrorCode
         auto err = reserve(arr, new_len) or_return err;
     }
     if (new_len > arr.len) {
-        ErrorCode err = init_type<Elem>(arr.buf + arr.len, new_len - arr.len)
-            or_return err;
+        auto err = init_value<Elem>(arr.buf + arr.len, new_len - arr.len) or_return err;
     }
 
     arr.len = new_len;
-    cx_assert(_rep_ok(arr));
+    cx_assert(rep_ok(arr));
     return null;
 }
 
@@ -245,7 +248,7 @@ cons fn shrink(Arr& arr) noexce -> ErrorCode
 
     arr.buf = cast(Elem*, buf);
     arr.cap = new_cap;
-    cx_assert(_rep_ok(arr));
+    cx_assert(rep_ok(arr));
     return null;
 }
 
@@ -266,7 +269,7 @@ cons fn free(Arr& arr) noexce -> ErrorCode
     arr.buf = null;
     arr.len = 0;
     arr.cap = 0;
-    cx_assert(_rep_ok(arr));
+    cx_assert(rep_ok(arr));
     return null;
 }
 
