@@ -1,7 +1,7 @@
-/** @file cx/os/file/file.hh **/
+/** @file libcx/__os/file/file.hh **/
 
-#ifndef CX_OS_FILE_FILE_HH
-#define CX_OS_FILE_FILE_HH
+#ifndef CX___OS_FILE_FILE_HH
+#define CX___OS_FILE_FILE_HH
 
 #include "libcx/conf/macro.hh"
 #include "libcx/uti/utilities.hh"
@@ -10,18 +10,18 @@
 namespace cx {
 inline namespace os {
 inline namespace file {
-
-////////////////////////////////////////////
 // Definitions
 
 using FileMode = u32;
-onedef cons FileMode FileMode_Read      = BIT<0>;
-onedef cons FileMode FileMode_Write     = BIT<1>;
-onedef cons FileMode FileMode_Append    = BIT<2>;
-onedef cons FileMode FileMode_ReadWrite = BIT<3>;
-onedef cons FileMode FileMode_Mask      = FileMode_Read | FileMode_Write | FileMode_Append | FileMode_ReadWrite;
+onedef cons FileMode FileMode_Read       = BIT<0>;
+onedef cons FileMode FileMode_Write      = BIT<1>;
+onedef cons FileMode FileMode_Append     = BIT<2>;
+onedef cons FileMode FileMode_ReadWrite  = BIT<3>;
+onedef cons FileMode FileMode_Mask       =
+    FileMode_Read | FileMode_Write | FileMode_Append | FileMode_ReadWrite;
 
-struct EnumName {
+struct EnumName
+{
     using Under = T;
     onedef glob cons Under EnumName_First = enum_beg;
     onedef glob cons Under EnumName_Second = enum_beg + 1;
@@ -32,32 +32,52 @@ struct EnumName {
     onedef glob cons Under EnumName_Seventh = enum_beg + 6;
     Under val;
     EnumName() = delete;
-    cons EnumName(Under val) : val(val) {}
-    cons operator Under() const { return val; }
-    cons bool operator==(EnumName rhs) const { return val == rhs.val; }
-    cons bool operator<=>(EnumName rhs) const { return val <=> rhs.val; }
+    cons EnumName(Under val) : val(val)
+    {
+    }
+    cons operator Under() const
+    {
+        return val;
+    }
+    cons b32 operator==(EnumName rhs) const
+    {
+        return val == rhs.val;
+    }
+    cons b32 operator<=>(EnumName rhs) const
+    {
+        return val <=> rhs.val;
+    }
 
-    cons string to_string() const 
+    cons string to_string() const
     {
         switch (val) {
-            case EnumName_Invalid: return "Invalid";
-            case EnumName_Filename: return "Filename";
-            case EnumName_Exists: return "Exists";
-            case EnumName_DontExists: return "DontExists";
-            case EnumName_Permission: return "Permission";
-            case EnumName_TruncFail: return "TruncFail";
-            default: return "Invalid";
+        case EnumName_Invalid:
+            return "Invalid";
+        case EnumName_Filename:
+            return "Filename";
+        case EnumName_Exists:
+            return "Exists";
+        case EnumName_DontExists:
+            return "DontExists";
+        case EnumName_Permission:
+            return "Permission";
+        case EnumName_TruncFail:
+            return "TruncFail";
+        default:
+            return "Invalid";
         }
     }
 };
 
-enum FileWhence {
+enum FileWhence
+{
     FileWhence_Begin,
     FileWhence_Current,
     FileWhence_End,
 };
 
-enum FileError {
+enum FileError
+{
     FileError_None,
     FileError_Invalid,
     FileError_Filename,
@@ -67,7 +87,8 @@ enum FileError {
     FileError_TruncFail,
 };
 
-enum FileStandardType {
+enum FileStandardType
+{
     FileStandard_Input,
     FileStandard_Output,
     FileStandard_Error,
@@ -75,46 +96,48 @@ enum FileStandardType {
     FileStandard_Count,
 };
 
-union FileDescriptor {
-    mutaptr p;
-    iptr i;
-    uptr u;
+union FileDescriptor
+{
+    mutaptr  p;
+    iptr     i;
+    uptr     u;
 };
 
 struct FileOperations;
 
-#define CX_FILE_OPEN(fun_name) \
-  func fun_name(FileDescriptor* fd, FileMode mode, cstring name) noexce -> FileError
-#define CX_FILE_READ_AT(fun_name) \
-  func fun_name(FileDescriptor fd, mutaptr buf, isize size, i64 off, isize* read) noexce -> i32
-#define CX_FILE_WRITE_AT(fun_name) \
-  func fun_name(FileDescriptor fd, readptr buf, isize size, i64 off, isize* written) noexce -> i32
-#define CX_FILE_SEEK(fun_name) \
-  func fun_name(FileDescriptor fd, i64 cur_off, FileWhence whence, i64* new_off) noexce -> i32
-#define CX_FILE_CLOSE(fun_name) \
-  func fun_name(FileDescriptor fd) noexce -> void
+#define CX_FILE_OPEN(fun_name)                                                                     \
+    func fun_name(FileDescriptor* fd, FileMode mode, cstring name) noexce -> FileError
+#define CX_FILE_READ_AT(fun_name)                                                                  \
+    func fun_name(FileDescriptor fd, mutaptr buf, isize size, i64 off, isize* read) noexce -> i32
+#define CX_FILE_WRITE_AT(fun_name)                                                                 \
+    func fun_name(FileDescriptor fd, readptr buf, isize size, i64 off, isize* written) noexce -> i32
+#define CX_FILE_SEEK(fun_name)                                                                     \
+    func fun_name(FileDescriptor fd, i64 cur_off, FileWhence whence, i64* new_off) noexce -> i32
+#define CX_FILE_CLOSE(fun_name) func fun_name(FileDescriptor fd) noexce -> void
 
 typedef CX_FILE_READ_AT(FileReadProc);
 typedef CX_FILE_WRITE_AT(FileWriteProc);
 typedef CX_FILE_SEEK(FileSeekProc);
 typedef CX_FILE_CLOSE(FileCloseProc);
 
-// TODO(manu): If File must also cover stream-like outputs, split sequential
+// TODO:(manu) If File must also cover stream-like outputs, split sequential
 // read/write from read_at/write_at, so sockets and pipes do not depend on seek.
-struct FileOperations {
-    FileReadProc*     read_at;
-    FileWriteProc*    write_at;
-    FileSeekProc*     seek;
-    FileCloseProc*    close;
+struct FileOperations
+{
+    FileReadProc*   read_at;
+    FileWriteProc*  write_at;
+    FileSeekProc*   seek;
+    FileCloseProc*  close;
 };
 
 using FileTime = u64;
 
-struct File {
-    FileOperations ops;
-    FileDescriptor fd;
-    char const* name;
-    FileTime mtime;
+struct File
+{
+    FileOperations  ops;
+    FileDescriptor  fd;
+    char const*     name;
+    FileTime        mtime;
 };
 
 // Platform specific definitions.
@@ -127,30 +150,25 @@ priv fn _win_file_alloc_wide(cstring text) noexce -> wchar_t*
         return null;
     }
 
-    isize len = strlen(text); // TODO: custom strlen!!!
+    isize len = strlen(text);  // TODO:(manu) custom strlen!!!
     if (len <= 0) {
         return null;
     }
 
-    i32 wlen = MultiByteToWideChar(
-        CP_UTF8, MB_ERR_INVALID_CHARS, text, int(len), null, 0
-    );
+    i32 wlen = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, text, int(len), null, 0);
     if (wlen == 0) {
         return null;
     }
 
-    auto [ptr, err] = aligned_alloc(
-        heap_allocator(), (wlen + 1) * size_of(wchar_t), align_of(wchar_t)
-    );
+    auto [ptr, err] =
+        aligned_alloc(heap_allocator(), (wlen + 1) * size_of(wchar_t), align_of(wchar_t));
     if (err) {
         return null;
     }
 
     wchar_t* wtext = cast(wchar_t*, ptr);
 
-    i32 res = MultiByteToWideChar(
-        CP_UTF8, MB_ERR_INVALID_CHARS, text, int(len), wtext, wlen
-    );
+    i32 res = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, text, int(len), wtext, wlen);
     if (res == 0) {
         aligned_free(heap_allocator(), wtext);
         return null;
@@ -267,7 +285,7 @@ priv noinln CX_FILE_OPEN(_win_file_open)
         creation_disposition = OPEN_ALWAYS;
         break;
     default:
-        // cx_panic("invalid file mode"); // TODO:
+        // cx_panic("invalid file mode");  // TODO:(manu)
         return FileError_Invalid;
     }
 
@@ -276,15 +294,8 @@ priv noinln CX_FILE_OPEN(_win_file_open)
         return FileError_Filename;
     }
 
-    fd->p = CreateFileW(
-        wname,
-        desired_access,
-        FILE_SHARE_READ | FILE_SHARE_DELETE,
-        null,
-        creation_disposition,
-        FILE_ATTRIBUTE_NORMAL,
-        null
-    );
+    fd->p = CreateFileW(wname, desired_access, FILE_SHARE_READ | FILE_SHARE_DELETE, null,
+                        creation_disposition, FILE_ATTRIBUTE_NORMAL, null);
 
     aligned_free(heap_allocator(), wname);
 
@@ -322,10 +333,10 @@ priv noinln CX_FILE_OPEN(_win_file_open)
 priv cons fn default_ops() noexce -> FileOperations
 {
     return FileOperations{
-        .read_at  = _win_file_read,
+        .read_at = _win_file_read,
         .write_at = _win_file_write,
-        .seek     = _win_file_seek,
-        .close    = _win_file_close,
+        .seek = _win_file_seek,
+        .close = _win_file_close,
     };
 }
 
@@ -349,9 +360,9 @@ priv fn file_standard_default(FileStandardType type) noexce -> File
     }
 
     return File{
-        .ops   = default_ops(),
-        .fd    = fd,
-        .name  = null,
+        .ops = default_ops(),
+        .fd = fd,
+        .name = null,
         .mtime = {},
     };
 }
@@ -400,11 +411,11 @@ inln fn file_last_write_time(cstring fpath) noexce -> FileTime
 
 priv onedef CX_FILE_SEEK(_posix_file_seek)
 {
-#if CX_SYSTEM_OSX
+#    if CX_SYSTEM_OSX
     i64 res = lseek(fd.i, cur_off, whence);
-#else  // LINUX
+#    else  // LINUX
     i64 res = lseek64(fd.i, cur_off, whence);
-#endif
+#    endif
 
     if (res < 0) {
         return false;
@@ -481,7 +492,7 @@ priv noinln CX_FILE_OPEN(_posix_file_open)
         os_mode = O_RDWR | O_APPEND | O_CREAT;
         break;
     default:
-        // cx_panic("invalid file mode"); // TODO:
+        // cx_panic("invalid file mode");  // TODO:(manu)
         return FileError_Invalid;
     }
 
@@ -496,10 +507,10 @@ priv noinln CX_FILE_OPEN(_posix_file_open)
 priv cons fn default_ops() noexce -> FileOperations
 {
     return FileOperations{
-        .read_at  = _posix_file_read,
+        .read_at = _posix_file_read,
         .write_at = _posix_file_write,
-        .seek     = _posix_file_seek,
-        .close    = _posix_file_close,
+        .seek = _posix_file_seek,
+        .close = _posix_file_close,
     };
 }
 
@@ -523,9 +534,9 @@ priv fn file_standard_default(FileStandardType type) noexce -> File
     }
 
     return File{
-        .ops   = default_ops(),
-        .fd    = fd,
-        .name  = null,
+        .ops = default_ops(),
+        .fd = fd,
+        .name = null,
         .mtime = {},
     };
 }
@@ -573,7 +584,7 @@ fn file_new(File* file, FileDescriptor fd, FileOperations ops, cstring name) noe
         return FileError_Invalid;
     }
 
-    isize len = strlen(name); // TODO: custom strlen!!!
+    isize len = strlen(name);  // TODO:(manu) custom strlen!!!
 
     auto [ptr, err] = aligned_alloc(heap_allocator(), (len + 1) * size_of(char));
     if (err) {
@@ -650,9 +661,8 @@ fn cx_file_close(File* file) noexce -> FileError
     return FileError_None;
 }
 
-inln fn file_read_at_check(
-    File* file, mutaptr buf, isize size, i64 off, isize* read
-) noexce -> b32 {
+inln fn file_read_at_check(File* file, mutaptr buf, isize size, i64 off, isize* read) noexce -> b32
+{
     if (file == null) {
         return false;
     }
@@ -660,8 +670,13 @@ inln fn file_read_at_check(
 }
 
 inln fn file_write_at_check(
-    File* file, readptr buf, isize size, i64 off, isize* written
-) noexce -> b32 {
+    File*    file,
+    readptr  buf,
+    isize    size,
+    i64      off,
+    isize*   written
+) noexce -> b32
+{
     if (file == null) {
         return false;
     }
@@ -792,4 +807,4 @@ inln fn file_has_changed(File* file) noexce -> b32
 }       // namespace os
 }       // namespace cx
 
-#endif  // CX_OS_FILE_FILE_HH
+#endif  // CX___OS_FILE_FILE_HH

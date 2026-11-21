@@ -20,8 +20,9 @@ template<typename... Ts> proposition tvarior = (Ts::value || ...);
 
 template<typename T> concept ___assertble = is_convertible<T, bool>;
 
-template<typename T>
-proposition is_assertble = ___assertble<T> && requires(T&& t) { { !static_cast<T&&>(t) } -> ___assertble; };
+template<typename T> proposition is_assertble = ___assertble<T> && requires(T&& t) {
+    { !static_cast<T&&>(t) } -> ___assertble;
+};
 
 template<typename T> concept Assertble = is_assertble<T>;
 

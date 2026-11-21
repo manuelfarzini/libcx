@@ -4,7 +4,11 @@
 #define CX_ARR_INLINE_ARRAY_HH
 
 #include "libcx/trait/lifetime.hh"
+#include "libcx/conf/macro.hh"
 #include "libcx/uti/utilities.hh"
+#include "libcx/uti/iterator.hh"
+#include "libcx/uti/members.hh"
+#include "libcx/uti/compare.hh"
 #include "libcx/mem/common.hh"
 
 namespace cx {
@@ -16,29 +20,46 @@ template<typename Tp, usize Cap, typename Sz = usize>
 struct InlineArray
 {
     static_assert(Cap > 0, "Array capacity must be greater than zero");
-    static_assert(is_value_initble<Tp>, "Element type `T` must be value initializable");
+    static_assert(is_passive_value<Tp>, "Element type `T` must be passive");
     CX_DEFINE_MEMBER_TYPES(Tp, Sz);
     using Self = InlineArray<Elem, Cap, Size>;
 
-    inline static cons Size cap{Cap};
-    Elem buf[Cap]{};
-    Size len{};
+    inline static cons Size  cap{Cap};
+    Elem                     buf[Cap]{};
+    Size                     len{};
 
-    inln cons fn operator[](usize const i) noexce -> Elem& { return buf[i]; }
-    inln cons fn operator[](usize const i) const noexce -> Elem const& { return buf[i]; }
+    inln cons fn operator[](usize const i) noexce -> Elem&
+    {
+        return buf[i];
+    }
+    inln cons fn operator[](usize const i) const noexce -> Elem const&
+    {
+        return buf[i];
+    }
 
-    inln cons fn begin() noexce -> Iter { return buf; }
-    inln cons fn end() noexce -> Iter { return buf + len; }
-    inln cons fn begin() const noexce -> Kter { return buf; }
-    inln cons fn end() const noexce -> Kter { return buf + len; }
+    inln cons fn begin() noexce -> Iter
+    {
+        return buf;
+    }
+    inln cons fn end() noexce -> Iter
+    {
+        return buf + len;
+    }
+    inln cons fn begin() const noexce -> Kter
+    {
+        return buf;
+    }
+    inln cons fn end() const noexce -> Kter
+    {
+        return buf + len;
+    }
 };
 
 CX_CONCEPT_GEN_TEMPL(InlineArray, is_inline_array, SomeInlineArray,
                      VA_(typename Tp, usize Cap, typename Sz), VA_(Tp, Cap, Sz));
-#define Inline_Array cx::arr::SomeInlineArray auto
 
 /// Equality operator.
-cons fn operator==(Inline_Array const& a, Inline_Array const& b) noexce -> bool
+cons fn operator==(SomeInlineArray auto const& a, SomeInlineArray auto const& b) noexce -> b32
 {
     if (&a == &b) {
         return true;
@@ -56,8 +77,13 @@ cons fn operator==(Inline_Array const& a, Inline_Array const& b) noexce -> bool
     return true;
 }
 
+cons fn operator!=(SomeInlineArray auto const& a, SomeInlineArray auto const& b) noexce -> b32
+{
+    return !(a == b);
+}
+
 /// Comparison operator.
-cons fn operator<=>(Inline_Array const& a, Inline_Array const& b) noexce -> i8
+cons fn operator<=>(SomeInlineArray auto const& a, SomeInlineArray auto const& b) noexce -> i8
 {
     if (a.len < b.len) {
         return -1;
@@ -75,19 +101,16 @@ cons fn operator<=>(Inline_Array const& a, Inline_Array const& b) noexce -> i8
     }
     return 0;
 }
-
-// =========================================
 // Inline Array public API
-// =========================================
 
 /// Returns `true` if the array is empty.
-cons fn is_empty(Inline_Array arr) noexce -> bool
+cons fn is_empty(SomeInlineArray auto arr) noexce -> b32
 {
     return arr.len == 0;
 }
 
 /// Returns `true` if the array is full.
-cons fn is_full(Inline_Array arr) noexce -> bool
+cons fn is_full(SomeInlineArray auto arr) noexce -> b32
 {
     return arr.len == arr.cap;
 }
@@ -95,7 +118,7 @@ cons fn is_full(Inline_Array arr) noexce -> bool
 /// Shifts the `arr`'s elements to the right from `i` to `j` by `off` positions.
 /// Returns `true` if the shift was successful.
 template<SomeInlineArray Arr, typename Size = SizeIn<Arr>>
-inln cons fn shift_right(Arr& arr, Size i, Size j, Size off) noexce -> bool
+inln cons fn shift_right(Arr& arr, Size i, Size j, Size off) noexce -> b32
 {
     if (off == 0 || j >= arr.cap || i >= j || i + off > j) {
         return false;
@@ -111,7 +134,7 @@ inln cons fn shift_right(Arr& arr, Size i, Size j, Size off) noexce -> bool
 /// Shifts the `arr`'s elements to the left from `i` to `j` by `off` positions.
 /// Returns `true` if the shift was successful.
 template<SomeInlineArray Arr, typename Size = SizeIn<Arr>>
-inln cons fn shift_left(Arr& arr, Size i, Size j, Size off) noexce -> bool
+inln cons fn shift_left(Arr& arr, Size i, Size j, Size off) noexce -> b32
 {
     if (off == 0 || j >= arr.cap || i >= j || i + off > j) {
         return false;
@@ -123,27 +146,30 @@ inln cons fn shift_left(Arr& arr, Size i, Size j, Size off) noexce -> bool
 }
 
 ///
-template<
-    SomeInlineArray Arr,
-    typename Size = SizeIn<Arr>,
-    typename... Args>
+template<SomeInlineArray Arr, typename Size = SizeIn<Arr>, typename... Args>
 cons fn push_back(Arr& arr, Size num, Args&&... args) noexce -> ErrorCode
-    with (same_or_cvref<ElemIn<Arr>, Args>&&...)
+    with (same_or_cvref<ElemIn<Arr>, Args> && ...)
 {
     if (num == 0) {
-        return false;
+        return none;
     }
-    auto [_, err] = init_args<ElemIn<Arr>>(&arr.buf[arr.len], num, args...) or_return Operation_Fail;
+    if (num < 0 || num > arr.cap - arr.len) {
+        return Invalid_Arg;
+    }
+    init_args<ElemIn<Arr>>(&arr.buf[arr.len], num, args...);
     arr.len += num;
     return none;
 }
 
 ///
 template<SomeInlineArray Arr, typename Elm = ElemIn<Arr>>
-fn push_back(Arr& arr, initls<Elm> lst) noexce -> bool
+fn push_back(Arr& arr, initls<Elm> lst) noexce -> b32
 {
-    if (lst.size() == 0 && lst.size() + arr.len > arr.cap) {
+    if (lst.size() > arr.cap - arr.len) {
         return false;
+    }
+    if (lst.size() == 0) {
+        return true;
     }
     init_list<ElemIn<Arr>>(&arr.buf[arr.len], lst);
     arr.len += lst.size();
@@ -152,7 +178,7 @@ fn push_back(Arr& arr, initls<Elm> lst) noexce -> bool
 
 ///
 template<SomeInlineArray Arr, typename Elm = ElemIn<Arr>>
-fn pop_back(Arr& arr, Elm& res) noexce -> bool
+fn pop_back(Arr& arr, Elm& res) noexce -> b32
 {
     if (arr.len == 0) {
         return false;
@@ -196,30 +222,26 @@ cons fn find(Arr& arr, Elm&& elm, Cmp cmp = lne) noexce -> isize
 /// where `i` is the index.
 // FIX:(manu) custom is_callable with parameters to add in the requires
 // is_callable<Cmp, ElemIn<Arr>, PlainT<Key>>
-template<
-    SomeInlineArray Arr, typename Key, typename Cmp
-> 
+template<SomeInlineArray Arr, typename Key, typename Cmp>
 cons fn find(Arr& arr, Key&& key, Cmp cmp) noexce -> isize
-    with (!SomeComparator<Cmp>
-           && is_total_ordered<ElemIn<Arr>>
-           && is_total_ordered_w<ElemIn<Arr>, PlainT<Key>>)
+    with (!SomeComparator<Cmp> &&
+          is_total_ordered<ElemIn<Arr>> &&
+          is_total_ordered_w<ElemIn<Arr>, PlainT<Key>>)
 {
     usize i = 0;
     while (i < arr.len && cmp(arr[i], key)) {
         i++;
     }
     if (i < arr.len && !cmp(arr[i], key) && eq(arr[i], key)) {
-        return (isize) i;
+        return (isize)i;
     }
     return -i - 1;
 }
 
 ///
-template<
-    SomeInlineArray Arr, typename Elm, OrderType Cmp = Lne
->
+template<SomeInlineArray Arr, typename Elm, OrderType Cmp = Lne>
 cons fn insert(Arr& arr, Elm&& elm, Cmp cmp = lne) noexce -> isize
-    with is_total_ordered<ElemIn<Arr>>&& same_or_cvref<ElemIn<Arr>, Elm>
+    with is_total_ordered<ElemIn<Arr>> && same_or_cvref<ElemIn<Arr>, Elm>
 {
     if (arr.len == arr.cap) {
         return -1;
@@ -240,29 +262,25 @@ cons fn insert(Arr& arr, Elm&& elm, Cmp cmp = lne) noexce -> isize
     return i;
 }
 
-// cons fn remove(Inline_Array& arr, KeyIn(arr) key) -> isize {
+// cons fn remove(SomeInlineArray auto& arr, KeyIn(arr) key) -> isize {
 // }
-
-// =========================================
 // Testing
-// =========================================
 
-#ifdef CX_TEST
-#ifndef CX_TEST_INLINE_ARRAY
-#define CX_TEST_INLINE_ARRAY
-#include <stdio.h>
+#if defined(CX_TEST_INLINE_ARRAY)
 
 fn test_inline_array_compare() -> void
 {
-    using CX;
+    using namespace cx;
     InlineArray<i32, 8> a{};
-    push_back(a, 42);
+    static_assert(same_as<decltype(a == a), b32>);
+    static_assert(same_as<decltype(a != a), b32>);
+    cx_assert_hard(a == a && !(a != a), "Invalid equality comparison");
+    cx_assert_hard(!push_back(a, isize(1), i32(42)), "Validation failed");
     InlineArray<i32, 6> b{};
-    bool x = a > b;
-    printf("%d\n", x);
+    b32 x = a > b;
+    cx_assert_hard(x, "Validation failed");
 }
 
-#endif
 #endif
 
 }       // namespace arr

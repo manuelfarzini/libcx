@@ -10,19 +10,28 @@
 
 namespace cx {
 
-struct ___LongStr  { u8* ptr; isize len; };
-struct ___ShortStr { u8 buf[16]; };
+struct ___LongStr
+{
+    u8*    ptr;
+    isize  len;
+};
+struct ___ShortStr
+{
+    u8 buf[16];
+};
 
 /**
     A string …
 **/
-struct string {
+struct string
+{
     CX_DEFINE_MEMBER_TYPES(u8, isize);
     using Self = string;
 
-    union {
-        ___LongStr l;
-        ___ShortStr s;
+    union
+    {
+        ___LongStr   l;
+        ___ShortStr  s;
     };
 };
 
@@ -30,26 +39,23 @@ struct string {
     Creates a new string from the given `txt` of size `len`.
     If `len` is less than 0 then the length of `txt` will be used.
     If `0 <= len <= 16` then the buffer is copied into the string.
-
-    @para
+    @arg
     - `txt`: the pointer to the string
     - `len`: the length of the string
-
     @ret
     - the new string
-
-    @pre
+    @req
     - if `len < 0` then `txt` must be null-terminated
     - if `len > 16` then `txt` must be properly allocated (1.)
-
-    @nota
+    @inf
     1. this procedure does not allocate memory
 **/
 cons fn make_string(
-    u8 const*         txt,
-    isize             len       = 0, 
-    mem::Allocator    alctor    = mem::heap_allocator()
-) noexce -> string {
+    u8 const*       txt,
+    isize           len     = 0,
+    mem::Allocator  alctor  = mem::heap_allocator()
+) noexce -> string
+{
     if (len < 0) /* unlike */ {
         len = cx_strlen(txt);
     }
@@ -64,33 +70,32 @@ cons fn make_string(
 
 /**
     Creates a new string from the given source `txt`.
-
-    @para
+    @arg
     - `text`: the source character buffer
-
-    @pre
+    @req
     - If `len < 0` then `txt` must be null-terminated
-
     @see
     -  `make_string(u8 const*, isize)`
 **/
 onedef cons fn make_string(
-    char const*       txt,
-    mem::Allocator    alctor    = mem::heap_allocator()
-) noexce -> string {
+    char const*     txt,
+    mem::Allocator  alctor  = mem::heap_allocator()
+) noexce -> string
+{
     return make_string(ptrcu8(txt), cx_strlen(txt), alctor);
 }
 
 /** Creates a `vstring` from the given String `str`. **/
 template<>
-onedef cons fn slice(string const& str) noexce -> vstring 
+onedef cons fn slice(string const& str) noexce -> vstring
 {
     return {str.l.ptr, str.l.len};
 }
 
 static_assert(is_string_like<string>);
 
-fn test() -> void {
+fn test() -> void
+{
 
     cons char const* txt = "Hello";
 
@@ -107,7 +112,7 @@ fn test() -> void {
 
     cx_unused(str1);
     cx_unused(str3);
-    // auto s3 = make_string(txt); 
+    // auto s3 = make_string(txt);
 }
 
 }       // namespace cx

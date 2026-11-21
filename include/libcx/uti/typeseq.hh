@@ -9,19 +9,18 @@
 
 namespace cx {
 inline namespace uti {
-
-////////////////////////////////////////////
 // Type sequence
 
-namespace ___type_seq_detail {
-struct ___NullType {};
-}
+struct TypeSeqEnd
+{};
 
-template<typename... Ts> struct TypeSeq;
+template<typename... Ts>
+struct TypeSeq;
 
 template<>
-struct TypeSeq<> {
-    using Head = ___type_seq_detail::___NullType;
+struct TypeSeq<>
+{
+    using Head = TypeSeqEnd;
     using Rest = TypeSeq<>;
 
     onedef glob cons bool empty = true;
@@ -29,7 +28,8 @@ struct TypeSeq<> {
 };
 
 template<typename H, typename... Rs>
-struct TypeSeq<H, Rs...> {
+struct TypeSeq<H, Rs...>
+{
     using Head = H;
     using Rest = TypeSeq<Rs...>;
 
@@ -42,10 +42,7 @@ CX_CONCEPT_GEN_TEMPL(TypeSeq, is_type_seq, SomeTypeSeq, typename... Ts, Ts...);
 template<typename... Ts>
 onedef cons isize size_of_tseq = TypeSeq<Ts...>::size;
 
-template<typename>
-proposition cx__always_false = false; // TODO: to be moved
-
-////////////////////////////////////////////
+template<typename> proposition cx__always_false = false;  // TODO:(manu) to be moved
 // Homogeneous type sequence
 
 template<SomeTypeSeq Seq>
@@ -53,35 +50,33 @@ cons fn cx__tseq_is_homo() -> bool
 {
     if constexpr (Seq::empty || Seq::Rest::empty) {
         return true;
-    } else { // XXX: or cvref ???
-        return same_as<typename Seq::Head, typename Seq::Rest::Head>
-               && cx__tseq_is_homo<typename Seq::Rest>();
+    } else {  // XXX:(manu) or cvref ???
+        return same_as<typename Seq::Head, typename Seq::Rest::Head> &&
+               cx__tseq_is_homo<typename Seq::Rest>();
     }
 }
 
-template<SomeTypeSeq Seq>
-proposition tseq_is_homo = cx__tseq_is_homo<Seq>();
+template<SomeTypeSeq Seq> proposition tseq_is_homo = cx__tseq_is_homo<Seq>();
 
-template<typename... Ts>
-proposition va_is_homo = tseq_is_homo<TypeSeq<Ts...>>;
-
-////////////////////////////////////////////
+template<typename... Ts> proposition va_is_homo = tseq_is_homo<TypeSeq<Ts...>>;
 // Type at a given index in a type sequence
 
-template<isize Idx, SomeTypeSeq Seq, bool Empty = Seq::empty>
+template<isize Idx, SomeTypeSeq Seq, bool empty = Seq::empty>
 struct cxTypeAt;
 
 template<isize Idx, SomeTypeSeq Seq>
-struct cxTypeAt<Idx, Seq, false>
-    : cxTypeAt<Idx - 1, typename Seq::Rest> {};
+struct cxTypeAt<Idx, Seq, false> : cxTypeAt<Idx - 1, typename Seq::Rest>
+{};
 
 template<SomeTypeSeq Seq>
-struct cxTypeAt<0, Seq, false> {
+struct cxTypeAt<0, Seq, false>
+{
     using Type = typename Seq::Head;
 };
 
 template<isize Idx, SomeTypeSeq Seq>
-struct cxTypeAt<Idx, Seq, true> {
+struct cxTypeAt<Idx, Seq, true>
+{
     static_assert(cx__always_false<Seq>, "TypeAt index out of range");
 };
 
@@ -90,8 +85,6 @@ using TypeAt = typename cxTypeAt<Idx, Seq>::Type;
 
 template<isize Idx, typename... Ts>
 using TypeAtVa = TypeAt<Idx, TypeSeq<Ts...>>;
-
-////////////////////////////////////////////
 // Index of a given type in a type sequence
 
 template<typename T, SomeTypeSeq Seq>
@@ -109,24 +102,25 @@ comp fn cx__type_idx_of() -> isize
 
 template<typename T, SomeTypeSeq Seq>
 onedef cons isize type_idx = cx__type_idx_of<T, Seq>();
-
-////////////////////////////////////////////
 // Integer sequence
 
 template<SomeIntegral Int, Int... Is>
-struct IntegerSeq {
+struct IntegerSeq
+{
     using Elem = Int;
     onedef glob cons isize size = sizeof...(Is);
 };
 
-CX_CONCEPT_GEN_TEMPL(IntegerSeq, is_integer_seq, SomeIntegerSeq,
-                     VA_(SomeIntegral Int, Int... Is), VA_(Int, Is...));
+CX_CONCEPT_GEN_TEMPL(IntegerSeq, is_integer_seq, SomeIntegerSeq, VA_(SomeIntegral Int, Int... Is),
+                     VA_(Int, Is...));
 
 template<SomeIntegral Int, isize N, isize... Is>
-struct cx__integer_seq : cx__integer_seq<Int, N - 1, N - 1, Is...> {};
+struct cx__integer_seq : cx__integer_seq<Int, N - 1, N - 1, Is...>
+{};
 
 template<SomeIntegral Int, isize... Is>
-struct cx__integer_seq<Int, isize{0}, Is...> {
+struct cx__integer_seq<Int, isize{0}, Is...>
+{
     using Type = IntegerSeq<Int, Int{Is}...>;
 };
 
@@ -150,24 +144,23 @@ using index_seq_va = index_seq<isize{sizeof...(Ts)}>;
 
 template<typename T>
 using index_seq_for = index_seq<isize{T::size}>;
-
-////////////////////////////////////////////
 // Same type or reference of the same type, typewise
 
 template<SomeTypeSeq L1, SomeTypeSeq L2, isize I = 0>
-    with (L1::size == L2::size)
-struct _multi_same_or_ref {
+with (L1::size == L2::size) struct _multi_same_or_ref
+{
     using T = TypeAt<I, L1>;
     using U = TypeAt<I, L2>;
-    glob proposition value = same_or_ref<T, U> &&
-                             _multi_same_or_ref<L1, L2, I + 1>::value;
+    glob proposition value = same_or_ref<T, U> && _multi_same_or_ref<L1, L2, I + 1>::value;
 };
 
 template<SomeTypeSeq L1, SomeTypeSeq L2>
-struct _multi_same_or_ref<L1, L2> { glob proposition value = true; };
+struct _multi_same_or_ref<L1, L2>
+{
+    glob proposition value = true;
+};
 
-template<SomeTypeSeq Ts, SomeTypeSeq Us>
-proposition multi_same_or_ref = _multi_same_or_ref<Ts, Us>::value;
+template<SomeTypeSeq Ts, SomeTypeSeq Us> proposition multi_same_or_ref = _multi_same_or_ref<Ts, Us>::value;
 
 }       // namespace uti
 }       // namespace cx

@@ -15,7 +15,7 @@ template<typename T, typename U> proposition same_as = cx__same_as<T, U>;
 
 template<typename T, typename... Ts> proposition one_of = (cx__same_as<T, Ts> || ...);
 
-// NOTE(manu) the taparam `T` must be a plain type (not cvref) in order to work as intended
+// NOTE:(manu) the taparam `T` must be a plain type (not cvref) in order to work as intended
 template<typename T, typename U> proposition same_or_cv = same_as<T, rm_cv<U>>;
 template<typename T, typename U> proposition same_or_ref = same_as<T, rm_ref<U>>;
 template<typename T, typename U> proposition same_or_cvref = same_as<T, rm_cvref<U>>;
@@ -24,10 +24,11 @@ template<typename T, typename U> proposition is_convertible = requires { static_
 
 // Conversion
 
-template<typename U> void accept__implicit_convertible(U);
+template<typename U>
+void accept__implicit_convertible(U);
 
-template<typename T, typename U>
-proposition is_implicit_convertible = requires { accept__implicit_convertible<U>(declv<T>()); };
+template<typename T, typename U> proposition is_implicit_convertible =
+    requires { accept__implicit_convertible<U>(declv<T>()); };
 
 template<typename T, typename U>
 using ternary_res = declt(false ? declv<T>() : declv<U>());

@@ -37,37 +37,35 @@
 #define cx_take_err cx::uti::take(err)
 
 #ifndef try_rethrow_as
-  #define CX__TRY_RETHROW_AS(val, _BLK_, R, uniq)               \
-    auto [val, CX_JOIN2(err, uniq)] = (_BLK_);                  \
-    if (CX_JOIN2(err, uniq)) {                                  \
-      return cx_res{R{}, cx::uti::take(CX_JOIN2(err, uniq))}; \
-    }
-  #define try_rethrow_as(val, _BLK_, R) CX__TRY_RETHROW_AS(val, _BLK_, R, __COUNTER__)
+#    define CX__TRY_RETHROW_AS(val, _BLK_, R, uniq)                                                \
+        auto [val, CX_JOIN2(err, uniq)] = (_BLK_);                                                 \
+        if (CX_JOIN2(err, uniq)) {                                                                 \
+            return cx_res{R{}, cx::uti::take(CX_JOIN2(err, uniq))};                                \
+        }
+#    define try_rethrow_as(val, _BLK_, R) CX__TRY_RETHROW_AS(val, _BLK_, R, __COUNTER__)
 #endif
 
 #ifndef try_rethrow
-  #define CX__TRY_RETHROW(val, _BLK_, uniq)                                       \
-    auto [val, CX_JOIN2(err, uniq)] = (_BLK_);                                    \
-    if (CX_JOIN2(err, uniq)) {                                                    \
-      if cons (cx::uti::mv_ctble<plaint(val)>) {                            \
-        return cx_res{cx::uti::take(val), cx::uti::take(CX_JOIN2(err, uniq))}; \
-      } else {                                                                     \
-        return cx_res{val, cx::uti::take(CX_JOIN2(err, uniq))};                 \
-      }                                                                            \
-    }
-  #define try_rethrow(val, _BLK_) CX__TRY_RETHROW(val, _BLK_, __COUNTER__)
+#    define CX__TRY_RETHROW(val, _BLK_, uniq)                                                      \
+        auto [val, CX_JOIN2(err, uniq)] = (_BLK_);                                                 \
+        if (CX_JOIN2(err, uniq)) {                                                                 \
+            if cons (cx::uti::mv_ctble<plaint(val)>) {                                             \
+                return cx_res{cx::uti::take(val), cx::uti::take(CX_JOIN2(err, uniq))};             \
+            } else {                                                                               \
+                return cx_res{val, cx::uti::take(CX_JOIN2(err, uniq))};                            \
+            }                                                                                      \
+        }
+#    define try_rethrow(val, _BLK_) CX__TRY_RETHROW(val, _BLK_, __COUNTER__)
 #endif
 
 #ifndef try_rethrow_empty
-  #define CX__TRY_VALUE(val, _BLK_, uniq)                               \
-    auto [val, CX_JOIN2(err, uniq)] = (_BLK_);                          \
-    if (CX_JOIN2(err, uniq)) {                                          \
-      return cx_res{cx_empty{}, cx::uti::take(CX_JOIN2(err, uniq))}; \
-    }
-  #define try_rethrow_empty(val, _BLK_) CX__TRY_VALUE(val, _BLK_, __COUNTER__)
-#endif
-
-// #include "libcx/err/result_pair.hh"
+#    define CX__TRY_VALUE(val, _BLK_, uniq)                                                        \
+        auto [val, CX_JOIN2(err, uniq)] = (_BLK_);                                                 \
+        if (CX_JOIN2(err, uniq)) {                                                                 \
+            return cx_res{cx_empty{}, cx::uti::take(CX_JOIN2(err, uniq))};                         \
+        }
+#    define try_rethrow_empty(val, _BLK_) CX__TRY_VALUE(val, _BLK_, __COUNTER__)
+#endif  // #include "libcx/err/result_pair.hh"
 // fn test_help() -> cx::err::ResultPair<int>
 // {
 //   return cx::err::ResultPair(42);
@@ -80,7 +78,7 @@
 
 // /// If `_BLK_` returns an error, it is be propagated unchanged.
 // /// Requires: `_BLK_` is a `ResultPair`.
-// /// Note: defines `val` and generates a unique name for `err` 
+// /// Note: defines `val` and generates a unique name for `err`
 // ///       while defining it.
 
 /// If `_BLK_` returns an error, it is be propagated unchanged.
@@ -99,8 +97,7 @@
 /// If `_BLK_` returns an error, it is be propagated unchanged.
 /// Requires: `_BLK_` is a `ResultPair`, `val` and `err` are
 ///           already defined.
-// FIX:
-// Need a custom `ResultTie` implementation or another mechanism 
+// FIX:(manu) // Need a custom `ResultTie` implementation or another mechanism
 // to avoid std::tie.
 // The problem is std::tie generates references to pointers.
 // 1. `ResultTie` type with specialization for pointers
@@ -128,6 +125,5 @@
 // #define cx_try_v(V, err, _BLK_) \
 //   V val;                         \
 //   cx_try(val, err, _BLK_)
-
 
 #endif  // CX_ERR_MACRO

@@ -10,6 +10,7 @@
 #include "libcx/uti/compare.hh"
 #include "libcx/uti/iterator.hh"
 #include "libcx/uti/members.hh"
+#include "libcx/uti/tuple.hh"
 #include "libcx/mem/common.hh"
 #include "libcx/mem/allocator.hh"
 
@@ -30,32 +31,48 @@ struct DynamicArray
     Allocator  alc;
 
     // TODO:(manu) Should I define the operator using forward_with?
-    inln cons fn operator[](isize i) noexce { return buf[i]; }
-    inln cons fn operator[](isize i) const noexce { return buf[i]; }
+    inln cons fn operator[](isize i) noexce
+    {
+        return buf[i];
+    }
+    inln cons fn operator[](isize i) const noexce
+    {
+        return buf[i];
+    }
 
-    inln cons fn begin() noexce -> Iter { return buf; }
-    inln cons fn end() noexce -> Iter { return buf + len; }
-    inln cons fn begin() const noexce -> Kter { return buf; }
-    inln cons fn end() const noexce -> Kter { return buf + len; }
+    inln cons fn begin() noexce -> Iter
+    {
+        return buf;
+    }
+    inln cons fn end() noexce -> Iter
+    {
+        return buf + len;
+    }
+    inln cons fn begin() const noexce -> Kter
+    {
+        return buf;
+    }
+    inln cons fn end() const noexce -> Kter
+    {
+        return buf + len;
+    }
 };
 
-template<typename E> DynamicArray(E) -> DynamicArray<E>;
+template<typename E>
+DynamicArray(E) -> DynamicArray<E>;
 
 template<typename E, typename... Es>
 DynamicArray(E, Es...) -> DynamicArray<enable_if<(same_as<E, Es> && ...), E>>;
 
-CX_CONCEPT_GEN_TEMPL(
-    DynamicArray, is_array, SomeDynamicArray,
-    VA_(typename E, typename S), VA_(E, S)
-);
+CX_CONCEPT_GEN_TEMPL(DynamicArray, is_array, SomeDynamicArray, VA_(typename E, typename S),
+                     VA_(E, S));
 
 template<typename T, typename E> proposition is_array_of = false;
 template<typename T, typename S> proposition is_array_of<DynamicArray<T, S>, T> = true;
 template<typename Arr, typename E> concept SomeArrayOf = is_array_of<Arr, E>;
 
 /** Equality operator. **/
-cons fn
-operator==(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce -> bool
+cons fn operator==(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce -> b32
 {
     if (&a == &b) {
         return true;
@@ -73,9 +90,13 @@ operator==(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexc
     return true;
 }
 
+cons fn operator!=(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce -> b32
+{
+    return !(a == b);
+}
+
 /** Comparison operator. **/
-cons fn
-operator<=>(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce -> i8
+cons fn operator<=>(SomeDynamicArray auto const& a, SomeDynamicArray auto const& b) noexce -> i8
 {
     if (a.len < b.len) {
         return -1;
@@ -120,9 +141,10 @@ inln priv cons fn rep_ok(SomeDynamicArray auto const& arr) noexce -> b32
 template<PassiveValue E, typename S = isize>
 cons fn make(
     isize      cap,
-    Allocator  alc    =  heap_allocator(),
-    AllocFlag  flags  =  AllocFlag_Zero
-) noexce -> Res<DynamicArray<E, S>, ErrorCode> {
+    Allocator  alc    = heap_allocator(),
+    AllocFlag  flags  = AllocFlag_Zero
+) noexce -> Res<DynamicArray<E, S>, ErrorCode>
+{
     if (cap < 0) {
         return {DynamicArray<E, S>{null, 0, 0, alc}, Invalid_Arg};
     }
@@ -135,39 +157,39 @@ cons fn make(
 
     auto arr = DynamicArray<E, S>{cast(E*, buf), S(0), S(cap), alc};
     cx_assert(rep_ok(arr));
-    return {arr, null};
+    return {arr, none};
 }
 
 // To be used for quick inline variable definitions from temporary values.
 template<typename S = isize, typename E, typename... Es>
 cons fn dynamic_array(
-    Allocator a, E&& e, Es&&... es
+    Allocator  a,
+    E&&        e,
+    Es&&...    es
 ) noexce -> Res<DynamicArray<PlainT<E>, S>, ErrorCode>
     with (PassiveValue<PlainT<E>, PlainT<Es>...> && (same_as<PlainT<E>, PlainT<Es>> && ...))
 {
     using Elem = PlainT<E>;
 
     isize n = 1 + isize(sizeof...(Es));
-    auto [arr, err] = make<Elem, S>(n, a, AllocFlag_None)
-        or_return {DynamicArray<Elem, S>{null, 0, 0, a}, err};
-    
+    auto [arr, err] =
+        make<Elem, S>(n, a, AllocFlag_None) or_return {DynamicArray<Elem, S>{null, 0, 0, a}, err};
 
-    Elem vals[] { forward<E>(e), forward<Es>(es)... };
+    Elem vals[]{forward<E>(e), forward<Es>(es)...};
     mem_copy(arr.buf, vals, n);
     arr.len = n;
 
     cx_assert(rep_ok(arr));
-    return {arr, null};
+    return {arr, none};
 }
 
 template<typename S = isize, typename E, typename... Es>
-inln cons fn dynamic_array(
-    E&& e, Es&&... es
-) noexce -> Res<DynamicArray<PlainT<E>, S>, ErrorCode> with
-(
-    not same_as<PlainT<E>, Allocator> && PassiveValue<PlainT<E>, PlainT<Es>...> &&
-        (same_as<PlainT<E>, PlainT<Es>> && ...)
-) {
+inln cons fn dynamic_array(E&& e, Es&&... es) noexce -> Res<DynamicArray<PlainT<E>, S>, ErrorCode>
+    with (not same_as<PlainT<E>, Allocator> &&
+          PassiveValue<PlainT<E>, PlainT<Es>...> &&
+          (same_as<PlainT<E>, PlainT<Es>> &&
+          ...))
+{
     return dynamic_array<S>(heap_allocator(), forward<E>(e), forward<Es>(es)...);
 }
 
@@ -178,7 +200,7 @@ cons fn reserve(Arr& arr, SizeIn<Arr> new_cap) noexce -> ErrorCode
     using Size = SizeIn<Arr>;
 
     if (new_cap <= arr.cap) {
-        return null;
+        return none;
     }
     if (new_cap < DYNAMIC_ARRAY_MIN_CAP) {
         new_cap = DYNAMIC_ARRAY_MIN_CAP;
@@ -189,19 +211,13 @@ cons fn reserve(Arr& arr, SizeIn<Arr> new_cap) noexce -> ErrorCode
         new_cap = grown;
     }
 
-    auto [buf, err] = mem_resize(
-        arr.alc,
-        arr.buf,
-        arr.cap * size_of(Elem),
-        new_cap * size_of(Elem),
-        align_of(Elem),
-        AllocFlag_None
-    ) or_return err;
+    auto [buf, err] = mem_resize(arr.alc, arr.buf, arr.cap * size_of(Elem), new_cap * size_of(Elem),
+                                 align_of(Elem), AllocFlag_None) or_return err;
 
     arr.buf = cast(Elem*, buf);
     arr.cap = new_cap;
     cx_assert(rep_ok(arr));
-    return null;
+    return none;
 }
 
 template<SomeDynamicArray Arr>
@@ -216,12 +232,12 @@ cons fn resize(Arr& arr, SizeIn<Arr> new_len) noexce -> ErrorCode
         auto err = reserve(arr, new_len) or_return err;
     }
     if (new_len > arr.len) {
-        auto err = init_value<Elem>(arr.buf + arr.len, new_len - arr.len) or_return err;
+        init_value<Elem>(arr.buf + arr.len, new_len - arr.len);
     }
 
     arr.len = new_len;
     cx_assert(rep_ok(arr));
-    return null;
+    return none;
 }
 
 template<SomeDynamicArray Arr>
@@ -232,24 +248,18 @@ cons fn shrink(Arr& arr) noexce -> ErrorCode
 
     Size new_cap = arr.len > DYNAMIC_ARRAY_MIN_CAP ? arr.len : DYNAMIC_ARRAY_MIN_CAP;
     if (new_cap >= arr.cap) {
-        return null;
+        return none;
     }
 
     // Allocators may keep the old block when asked to shrink. The returned
     // storage is still valid for `new_cap`, and ownership remains with `arr`.
-    auto [buf, err] = mem_resize(
-        arr.alc,
-        arr.buf,
-        arr.cap * size_of(Elem),
-        new_cap * size_of(Elem),
-        align_of(Elem),
-        AllocFlag_None
-    ) or_return err;
+    auto [buf, err] = mem_resize(arr.alc, arr.buf, arr.cap * size_of(Elem), new_cap * size_of(Elem),
+                                 align_of(Elem), AllocFlag_None) or_return err;
 
     arr.buf = cast(Elem*, buf);
     arr.cap = new_cap;
     cx_assert(rep_ok(arr));
-    return null;
+    return none;
 }
 
 template<SomeDynamicArray Arr>
@@ -258,7 +268,7 @@ cons fn free(Arr& arr) noexce -> ErrorCode
     if (arr.buf == null) {
         arr.len = 0;
         arr.cap = 0;
-        return null;
+        return none;
     }
 
     // NOTE:(manu)
@@ -270,7 +280,7 @@ cons fn free(Arr& arr) noexce -> ErrorCode
     arr.len = 0;
     arr.cap = 0;
     cx_assert(rep_ok(arr));
-    return null;
+    return none;
 }
 
 // XXX:(manu) Forwarding, do I want to do that?
@@ -282,7 +292,7 @@ cons fn push_tail(SomeDynamicArray auto& arr, auto&& elm) noexce -> ErrorCode
     }
     arr.buf[arr.len] = forward<declt(elm)>(elm);
     arr.len++;
-    return null;
+    return none;
 }
 
 // Now always returns a copy
@@ -302,7 +312,7 @@ inln cons fn lshift(SomeDynamicArray auto& arr, size_in(arr) off) noexce -> Erro
     }
     mem_move(arr.buf, arr.buf + off, arr.len - off);
     arr.len -= off;
-    return null;
+    return none;
 }
 
 inln cons fn rshift(SomeDynamicArray auto& arr, size_in(arr) off) noexce -> ErrorCode
@@ -311,7 +321,7 @@ inln cons fn rshift(SomeDynamicArray auto& arr, size_in(arr) off) noexce -> Erro
         return Invalid_Arg;
     }
     mem_move(arr.buf + off, arr.buf, off);
-    return null;
+    return none;
 }
 
 template<SomeDynamicArray Arr, typename Size = SizeIn<Arr>>
@@ -321,11 +331,11 @@ inln cons fn lshift(Arr& arr, Size beg, Size end, Size off) noexce -> ErrorCode
         return Invalid_Arg;
     }
     mem_move(arr.buf + beg - off, arr.buf + beg, end - beg);
-    return null;
+    return none;
 }
 
 template<SomeDynamicArray Arr, typename Size = SizeIn<Arr>>
-inln cons fn rshift(Arr& arr, Size beg, Size end, Size off) noexce -> bool
+inln cons fn rshift(Arr& arr, Size beg, Size end, Size off) noexce -> b32
 {
     if (beg > end || end > arr.cap || off > arr.cap - end) unlike {
         return false;
@@ -335,19 +345,19 @@ inln cons fn rshift(Arr& arr, Size beg, Size end, Size off) noexce -> bool
     return true;
 }
 
-/** 
+/**
     Finds the insertion point after the last element ordered before or equal to `key`.
     With duplicates, the insertion point is after the existing equal range.
-    @para
+    @arg
     - `arr`: the array to search
     - `key`: the key to compare against
     - `cmp`: the ordering proposition
     @ret
     - the encoded insertion point `-i - 1`, where `i` is after the last matching key
-    @pre
+    @req
     - `arr` is ordered according to `cmp`
     - `arr` has at least one element
-    @nota
+    @inf
     - This overload is for large keys, passed by reference.
 **/
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
@@ -355,10 +365,10 @@ inln cons fn find_last(Arr const& arr, Key const& key, Cmp cmp = lne) noexce -> 
     with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) > 16)
 {
     if (arr.len <= 0) unlike {
-        return -1; // XXX:
+        return -1;  // XXX:(manu)
     }
     isize i = 0;
-    isize mid = arr.len/2;
+    isize mid = arr.len / 2;
     if (!cmp(key, arr[mid])) {
         i = mid + 1;
     }
@@ -368,30 +378,30 @@ inln cons fn find_last(Arr const& arr, Key const& key, Cmp cmp = lne) noexce -> 
     return -i - 1;
 }
 
-/** 
-    Finds the insertion point after the last element ordered before or equal to `key`.
-    With duplicates, the insertion point is after the existing equal range.
-    @para
-    - `arr`: the array to search
-    - `key`: the key to compare against
-    - `cmp`: the ordering proposition
-    @ret
-    - the encoded insertion point `-i - 1`, where `i` is after the last matching key
-    @pre
-    - `arr` is ordered according to `cmp`
-    - `arr` has at least one element
-    @nota
-    - This overload is for small keys, passed by value.
-**/
+/**
+        Finds the insertion point after the last element ordered before or equal to `key`.
+        With duplicates, the insertion point is after the existing equal range.
+        @arg
+        - `arr`: the array to search
+        - `key`: the key to compare against
+        - `cmp`: the ordering proposition
+        @ret
+        - the encoded insertion point `-i - 1`, where `i` is after the last matching key
+        @req
+        - `arr` is ordered according to `cmp`
+        - `arr` has at least one element
+        @inf
+        - This overload is for small keys, passed by value.
+    **/
 template<SomeDynamicArray Arr, typename Key, OrderType Cmp = Lne>
 inln cons fn find_last(Arr const& arr, Key key, Cmp cmp = lne) noexce -> isize
     with (is_total_ordered_w<ElemIn<Arr>, PlainT<Key>> && size_of(Key) <= 16)
 {
     if (arr.len <= 0) unlike {
-        return -1; // XXX:
+        return -1;  // XXX:(manu)
     }
     isize i = 0;
-    isize mid = arr.len/2;
+    isize mid = arr.len / 2;
     if (!cmp(key, arr[mid])) {
         i = mid + 1;
     }
@@ -470,48 +480,35 @@ cons fn insert(Arr& arr, Key key, Cmp cmp = lne) noexce -> isize
     arr.len += 1;
     return i;
 }
-
-////////////////////////////////////////////
 // Testing
+#if defined(CX_TEST_DYNAMIC_ARRAY)
 
-// #define CX_TEST_DYNARR 1
-#if CX_TEST_DYNARR
-
-CX_TEST_DEFINE(dynamic_array_basic) {
+CX_TEST_DEFINE(dynamic_array_basic)
+{
     auto [arr, err] = make<isize>(16);
-    if (err) {
-        printf("%d\n", err);
-        return;
-    }
+    static_assert(same_as<decltype(arr == arr), b32>);
+    static_assert(same_as<decltype(arr != arr), b32>);
+    cx_assert_hard(!err, "Array allocation failed");
+    cx_assert_hard(arr == arr && !(arr != arr), "Invalid equality comparison");
     for (isize i = 0; i < 10; i++) {
-        push_tail(arr, i);
+        cx_assert_hard(!push_tail(arr, i), "Append failed");
     }
-    puts("\npre shift\n");
-    for (auto a : arr) {
-        printf("%ld ", a);
-    }
-    lshift(arr, 2);
-    puts("\n\npost lshift\n");
-    for (auto a : arr) {
-        printf("%ld ", a);
-    }
-    rshift(arr, 2);
-    puts("\n\npost rshift\n");
-    for (auto a : arr) {
-        printf("%ld ", a);
-    }
-    puts("");
+    cx_assert_hard(arr.len == 10 && arr.buf[9] == 9, "Invalid appended values");
+    cx_assert_hard(!reserve(arr, 64), "Reserve failed");
+    cx_assert_hard(arr.len == 10 && arr.buf[9] == 9, "Reserve changed live data");
+    cx_assert_hard(!resize(arr, 12), "Resize failed");
+    cx_assert_hard(arr.buf[10] == 0 && arr.buf[11] == 0, "Invalid value initialization");
+    cx_assert_hard(!free(arr), "Free failed");
 }
 
 #endif
 
-}  // namespace arr
-}  // namespace cx
+}       // namespace arr
+}       // namespace cx
 
-// NOTE: facendo partire la capacita' da un minimo, come 16 o 16, risparmio le prime
+// NOTE:(manu) facendo partire la capacita' da un minimo, come 16 o 16, risparmio le prime
 // reallocazioni, inoltre posso anche fare in modo di taggare il puntatore per avere
 // la capacita' in multipli di 2 usando pochi bit, cosi' entro una certa lunghezza e
 // capacita' e' addirittura possibile taggare nel puntatore entrambe!
-
 
 #endif  // CX_ARR_DYNAMIC_ARRAY_HH

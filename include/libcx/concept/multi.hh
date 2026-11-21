@@ -7,14 +7,12 @@
 #include "libcx/trait/relation.hh"
 #include "libcx/trait/types.hh"
 
-namespace cx { 
+namespace cx {
 inline namespace uti {
 
-template<typename U, typename... Ts> 
-concept PlainArithmeticAmong = SomePlainArithmetic<U> && one_of<U, Ts...>;
+template<typename U, typename... Ts> concept PlainArithmeticAmong = SomePlainArithmetic<U> && one_of<U, Ts...>;
 
-template<typename U, typename... Ts>
-concept PlainRawPointerAmong = SomePlainRawPointer<U> && one_of<U, Ts...>;
+template<typename U, typename... Ts> concept PlainRawPointerAmong = SomePlainRawPointer<U> && one_of<U, Ts...>;
 
 }       // namespace uti
 }       // namespace cx

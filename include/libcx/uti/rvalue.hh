@@ -45,10 +45,10 @@ inline namespace uti {
 //   A get_a() const&;
 // };
 // template<typename T, typename U>
-// decltype(auto) min(T&& x, U&& y) {  
+// decltype(auto) min(T&& x, U&& y) {
 //   return x < y ? uti::forward<T>(x) : uti::forward<U>(y);
 // }
-// bool operator<(A const&, A const&);
+// b32 operator<(A const&, A const&);
 // void test() {
 //   C c1, c2;
 //   // auto const& a = min(c1.get_a(), c2.get_a()); dangling
@@ -56,15 +56,24 @@ inline namespace uti {
 // }
 // ```
 // https://www.youtube.com/watch?v=9V195P3Tv_8 18:22
-template<typename T> struct ___decay_rvalue {};
-template<typename T> struct ___decay_rvalue<T&> { using type = T&; };
-template<typename T> struct ___decay_rvalue<T&&> { using type = decay<T>; };
-template<typename T> using decay_rvalue = typename ___decay_rvalue<T>::type;
+template<typename T>
+struct ___decay_rvalue
+{};
+template<typename T>
+struct ___decay_rvalue<T&>
+{
+    using type = T&;
+};
+template<typename T>
+struct ___decay_rvalue<T&&>
+{
+    using type = decay<T>;
+};
+template<typename T>
+using decay_rvalue = typename ___decay_rvalue<T>::type;
 #ifndef cx_auto_ref
-    #define cx_auto_ref(var, ...) decay_rvalue<declt((__VA_ARGS__))&&> var = (__VA_ARGS__);
-#endif
-
-// 3.
+#    define cx_auto_ref(var, ...) decay_rvalue<declt((__VA_ARGS__)) &&> var = (__VA_ARGS__);
+#endif  // 3.
 // A custom version of the common reference trait
 // The `std::common_reference_t` trait tends to collapse mixed cases
 // like `int&` and `int&&` into `int&`, losing rvalue semantics.
@@ -77,12 +86,14 @@ template<typename T> using decay_rvalue = typename ___decay_rvalue<T>::type;
 // - otherwise, it yields the same as `uti::common_ref`.
 // It's useful in forwarding contexts to avoid accidental copies when
 // combining lvalues and temporaries.
-template<typename... Ts> 
-struct ___common_ref_rval {
-  using Old = common_ref<Ts...>;
-  using Type = condition<is_lref<Old> && (is_rref<Ts> || ...), rm_ref<Old>&&, Old>;
+template<typename... Ts>
+struct ___common_ref_rval
+{
+    using Old = common_ref<Ts...>;
+    using Type = condition<is_lref<Old> && (is_rref<Ts> || ...), rm_ref<Old>&&, Old>;
 };
-template<typename... Ts> using common_ref_rval = ___common_ref_rval<Ts...>::Type;
+template<typename... Ts>
+using common_ref_rval = ___common_ref_rval<Ts...>::Type;
 // Example of usage:
 // template<typename T, typename U>
 // common_ref_prefer_rvalue<T, U> help__test(T&& a, U&& b) {
@@ -95,11 +106,10 @@ template<typename... Ts> using common_ref_rval = ___common_ref_rval<Ts...>::Type
 // Binds to `const&&` if there is an rvalue.
 // Prevents an immediate copy.
 #ifndef cx_condition_ref
-    #define cx_condition_ref(b, l, r)                                       \
-        (b ? static_cast<common_ref<declt((l)), declt((r))>>(l)             \
+#    define cx_condition_ref(b, l, r)                                                              \
+        (b ? static_cast<common_ref<declt((l)), declt((r))>>(l)                                    \
            : static_cast<common_ref<declt((l)), declt((r))>>(r))
-#endif
-// Example of usage:
+#endif  // Example of usage:
 // struct A {};
 // struct B {
 //   A a;

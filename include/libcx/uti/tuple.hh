@@ -8,9 +8,9 @@
 #include "libcx/uti/sfinae.hh"
 #include "libcx/uti/typeseq.hh"
 
-#define CX_TUPLE_TYPE_MEMBERS(First, ...)                    \
-    using Elem = First;                                      \
-    using Types = TypeSeq<First __VA_OPT__(, ) __VA_ARGS__>; \
+#define CX_TUPLE_TYPE_MEMBERS(First, ...)                                                          \
+    using Elem = First;                                                                            \
+    using Types = TypeSeq<First __VA_OPT__(, ) __VA_ARGS__>;                                       \
     using Self = Tuple<First __VA_OPT__(, ) __VA_ARGS__>
 
 namespace cx {
@@ -18,109 +18,118 @@ inline namespace uti {
 
 /**
     A tuple that can hold up to 8 elements.
-
-    @param 
+    @par
     - `Ts...`: the types of the elements
 **/
-template<typename... Types> struct Tuple;
+template<typename... Types>
+struct Tuple;
 
 /**
     Go-style multiple return: a `Tuple` used to carry results alongside an
     `ErrorCode`.
 **/
-template<typename... Ts> using Res = Tuple<Ts...>;
+template<typename... Ts>
+using Res = Tuple<Ts...>;
 
 template<typename T0>
-struct Tuple<T0> {
+struct Tuple<T0>
+{
     CX_TUPLE_TYPE_MEMBERS(T0);
     onedef glob cons isize size = 1;
     T0 e0{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0)
-        : e0(forward<declt(x0)>(x0)) {}
 };
 
 template<typename T0, typename T1>
-struct Tuple<T0, T1> {
+struct Tuple<T0, T1>
+{
     CX_TUPLE_TYPE_MEMBERS(T0, T1);
     onedef glob cons isize size = 2;
-    T0 e0{}; T1 e1{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0, auto&& x1)
-        : e0(forward<declt(x0)>(x0)) , e1(forward<declt(x1)>(x1)) {}
+    T0  e0{};
+    T1  e1{};
 };
 
 template<typename T0, typename T1, typename T2>
-struct Tuple<T0, T1, T2> {
+struct Tuple<T0, T1, T2>
+{
     CX_TUPLE_TYPE_MEMBERS(T0, T1, T2);
     onedef glob cons isize size = 3;
-    T0 e0{}; T1 e1{}; T2 e2{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0, auto&& x1, auto&& x2)
-        : e0(forward<declt(x0)>(x0)) , e1(forward<declt(x1)>(x1)) , e2(forward<declt(x2)>(x2)) {}
+    T0  e0{};
+    T1  e1{};
+    T2  e2{};
 };
 
 template<typename T0, typename T1, typename T2, typename T3>
-struct Tuple<T0, T1, T2, T3> {
+struct Tuple<T0, T1, T2, T3>
+{
     CX_TUPLE_TYPE_MEMBERS(T0, T1, T2, T3);
     onedef glob cons isize size = 4;
-    T0 e0{}; T1 e1{}; T2 e2{}; T3 e3{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0, auto&& x1, auto&& x2, auto&& x3)
-        : e0(forward<declt(x0)>(x0)), e1(forward<declt(x1)>(x1)), e2(forward<declt(x2)>(x2))
-        , e3(forward<declt(x3)>(x3)) {}
+    T0  e0{};
+    T1  e1{};
+    T2  e2{};
+    T3  e3{};
 };
 
 template<typename T0, typename T1, typename T2, typename T3, typename T4>
-struct Tuple<T0, T1, T2, T3, T4> {
+struct Tuple<T0, T1, T2, T3, T4>
+{
     CX_TUPLE_TYPE_MEMBERS(T0, T1, T2, T3, T4);
     onedef glob cons isize size = 5;
-    T0 e0{}; T1 e1{}; T2 e2{}; T3 e3{}; T4 e4{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0, auto&& x1, auto&& x2, auto&& x3, auto&& x4)
-        : e0(forward<declt(x0)>(x0)) , e1(forward<declt(x1)>(x1)) , e2(forward<declt(x2)>(x2))
-        , e3(forward<declt(x3)>(x3)) , e4(forward<declt(x4)>(x4)) {}
+    T0  e0{};
+    T1  e1{};
+    T2  e2{};
+    T3  e3{};
+    T4  e4{};
 };
 
 template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
-struct Tuple<T0, T1, T2, T3, T4, T5> {
+struct Tuple<T0, T1, T2, T3, T4, T5>
+{
     CX_TUPLE_TYPE_MEMBERS(T0, T1, T2, T3, T4, T5);
     onedef glob cons isize size = 6;
-    T0 e0{}; T1 e1{}; T2 e2{}; T3 e3{}; T4 e4{}; T5 e5{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0, auto&& x1, auto&& x2, auto&& x3, auto&& x4, auto&& x5)
-        : e0(forward<declt(x0)>(x0)) , e1(forward<declt(x1)>(x1)) , e2(forward<declt(x2)>(x2))
-        , e3(forward<declt(x3)>(x3)) , e4(forward<declt(x4)>(x4)) , e5(forward<declt(x5)>(x5)) {}
+    T0  e0{};
+    T1  e1{};
+    T2  e2{};
+    T3  e3{};
+    T4  e4{};
+    T5  e5{};
 };
 
 template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct Tuple<T0, T1, T2, T3, T4, T5, T6> {
+struct Tuple<T0, T1, T2, T3, T4, T5, T6>
+{
     CX_TUPLE_TYPE_MEMBERS(T0, T1, T2, T3, T4, T5, T6);
     onedef glob cons isize size = 7;
-    T0 e0{}; T1 e1{}; T2 e2{}; T3 e3{}; T4 e4{}; T5 e5{}; T6 e6{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0, auto&& x1, auto&& x2, auto&& x3, auto&& x4, auto&& x5, auto&& x6)
-        : e0(forward<declt(x0)>(x0)) , e1(forward<declt(x1)>(x1)) , e2(forward<declt(x2)>(x2))
-        , e3(forward<declt(x3)>(x3)) , e4(forward<declt(x4)>(x4)) , e5(forward<declt(x5)>(x5))
-        , e6(forward<declt(x6)>(x6)) {}
+    T0  e0{};
+    T1  e1{};
+    T2  e2{};
+    T3  e3{};
+    T4  e4{};
+    T5  e5{};
+    T6  e6{};
 };
 
-template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-struct Tuple<T0, T1, T2, T3, T4, T5, T6, T7> {
+template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6,
+          typename T7>
+struct Tuple<T0, T1, T2, T3, T4, T5, T6, T7>
+{
     CX_TUPLE_TYPE_MEMBERS(T0, T1, T2, T3, T4, T5, T6, T7);
     onedef glob cons isize size = 8;
-    T0 e0{}; T1 e1{}; T2 e2{}; T3 e3{}; T4 e4{}; T5 e5{}; T6 e6{};
-    T7 e7{};
-    cons Tuple() = default;
-    cons Tuple(auto&& x0, auto&& x1, auto&& x2, auto&& x3, auto&& x4, auto&& x5, auto&& x6, auto&& x7)
-        : e0(forward<declt(x0)>(x0)) , e1(forward<declt(x1)>(x1)) , e2(forward<declt(x2)>(x2))
-        , e3(forward<declt(x3)>(x3)) , e4(forward<declt(x4)>(x4)) , e5(forward<declt(x5)>(x5))
-        , e6(forward<declt(x6)>(x6)) , e7(forward<declt(x7)>(x7)) {}
+    T0  e0{};
+    T1  e1{};
+    T2  e2{};
+    T3  e3{};
+    T4  e4{};
+    T5  e5{};
+    T6  e6{};
+    T7  e7{};
 };
 
-template<typename... Us> Tuple(Us...) -> Tuple<Us...>;
-template<typename U, typename... Us> Tuple(U, Us...) -> Tuple<U, Us...>;
-template<typename U> Tuple(U) -> Tuple<U>;
+template<typename... Us>
+Tuple(Us...) -> Tuple<Us...>;
+template<typename U, typename... Us>
+Tuple(U, Us...) -> Tuple<U, Us...>;
+template<typename U>
+Tuple(U) -> Tuple<U>;
 
 CX_CONCEPT_GEN_TEMPL(Tuple, is_tuple, SomeTuple, typename... Us, Us...);
 
@@ -184,14 +193,8 @@ inln cons fn get(Tup const& tup) -> auto const&
     return get<idx>(tup);
 }
 
-}       // namespace uti
-}       // namespace cx
-#endif  // CX_UTI_TUPLE_HH
-
-#if CX_TEST
-#ifndef CX_TEST_TUPLE
-#define CX_TEST_TUPLE
-fn test_tuple_basic() -> void
+#if defined(CX_TEST_TUPLE)
+CX_TEST_DEFINE(tuple_basic)
 {
     using namespace cx;
     Tuple tup = {i64(42), 'c', 3.14};
@@ -203,7 +206,10 @@ fn test_tuple_basic() -> void
     cx_unused(c);
 }
 #endif
-#endif
+
+}       // namespace uti
+}       // namespace cx
+#endif  // CX_UTI_TUPLE_HH
 
 // template<typename... Us> where (sizeof...(Us) > 0)
 // struct Tuple;
@@ -217,8 +223,7 @@ fn test_tuple_basic() -> void
 //
 //     onedef glob cons isize size = 1 + sizeof...(Us);
 //
-//     cons Tuple() = default;
-//
+// //
 //     cons Tuple(auto&& e, auto&&... es)
 //         : elem(forward<declt(e)>(e))
 //         , rest(forward<declt(es)>(es)...) {}
@@ -236,8 +241,7 @@ fn test_tuple_basic() -> void
 //
 //     onedef glob cons isize size = 1;
 //
-//     cons Tuple() = default;
-//     cons Tuple(auto&& elm) : elem(forward<declt(elm)>(elm)) {}
+// //     cons Tuple(auto&& elm) : elem(forward<declt(elm)>(elm)) {}
 //
 //     Elem elem{};
 // };

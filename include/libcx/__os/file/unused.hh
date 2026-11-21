@@ -1,4 +1,7 @@
 
+#ifndef CX___OS_FILE_UNUSED_HH
+#define CX___OS_FILE_UNUSED_HH
+
 // gb_inline isize gb_fprintf_va(struct gbFile* f, char const* fmt, va_list va) {
 //   char buf[4096];
 //   va_list va_save;
@@ -258,3 +261,5 @@
 //   res = (text - text_begin);
 //   return (res >= max_len || res < 0) ? -1 : res;
 // }
+
+#endif  // CX___OS_FILE_UNUSED_HH

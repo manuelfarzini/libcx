@@ -13,20 +13,18 @@
 #include <stdlib.h>
 
 #if CX_SYSTEM_WIN
-    #include <malloc.h>
+#    include <malloc.h>
 #endif
 
 namespace cx {
 inline namespace mem {
-
-////////////////////////////////////////////
 // Allocator interface
 
 using AllocFlag = u32;
 
-onedef cons AllocFlag AllocFlag_None    = 0;
-onedef cons AllocFlag AllocFlag_Zero    = BIT<0>;
-onedef cons AllocFlag AllocFlag_Default = AllocFlag_Zero;
+onedef cons AllocFlag AllocFlag_None     = 0;
+onedef cons AllocFlag AllocFlag_Zero     = BIT<0>;
+onedef cons AllocFlag AllocFlag_Default  = AllocFlag_Zero;
 
 enum AllocMode : u8
 {
@@ -36,7 +34,7 @@ enum AllocMode : u8
     AllocMode_FreeAll,
 };
 
-using AllocFunc = func (*) (
+using AllocFunc = func (*)(
     mutaptr    data,
     AllocMode  mode,
     isize      size,
@@ -48,16 +46,17 @@ using AllocFunc = func (*) (
 
 struct Allocator
 {
-    AllocFunc call;
-    mutaptr   data;
+    AllocFunc  call;
+    mutaptr    data;
 };
 
 inln fn mem_alloc(
     Allocator  a,
     isize      size,
-    isize      align  =  DEF_ALIGN,
-    AllocFlag  flags  =  AllocFlag_Default
-) noexce -> Res<mutaptr, ErrorCode> {
+    isize      align  = DEF_ALIGN,
+    AllocFlag  flags  = AllocFlag_Default
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (size <= 0) {
         return {null, Invalid_Arg};
     }
@@ -74,9 +73,10 @@ inln fn mem_resize(
     mutaptr    ptr,
     isize      old_size,
     isize      new_size,
-    isize      align     =  DEF_ALIGN,
-    AllocFlag  flags     =  AllocFlag_Default
-) noexce -> Res<mutaptr, ErrorCode> {
+    isize      align  = DEF_ALIGN,
+    AllocFlag  flags  = AllocFlag_Default
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (ptr == null) {
         return mem_alloc(a, new_size, align, flags);
     }
@@ -94,22 +94,18 @@ inln fn mem_free_all(Allocator a) noexce -> Res<mutaptr, ErrorCode>
 //     cx_unused(size);
 //     return mem_free(a, ptr);
 // }
-
-////////////////////////////////////////////
 // Heap allocator
 
 // Selects the portable manually aligned heap strategy instead of the native primitives.
 #ifndef CX_MANUAL_HEAP_ALLOC
-    #define CX_MANUAL_HEAP_ALLOC 0
+#    define CX_MANUAL_HEAP_ALLOC 0
 #endif
 
 #if CX_MANUAL_HEAP_ALLOC
 // Manual heap allocation layout: [base pointer][alignment padding][payload].
 
-inln fn heap_alloc(
-    isize      size,
-    AllocFlag  flags  =  AllocFlag_Default
-) noexce -> mutaptr {
+inln fn heap_alloc(isize size, AllocFlag flags = AllocFlag_Default) noexce -> mutaptr
+{
     if (flags & AllocFlag_Zero) {
         return ::calloc(1, usize(size));
     }
@@ -130,7 +126,8 @@ inln fn heap_alloc_aligned(
     isize      size,
     isize      align,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (size <= 0) {
         return {null, Invalid_Arg};
     }
@@ -148,7 +145,7 @@ inln fn heap_alloc_aligned(
 
     mutaptr ptr = align_up(ptr_add(base, PTR_SIZE), align);
     (cast(void**, ptr))[-1] = base;
-    return {ptr, Error_None};
+    return {ptr, none};
 }
 
 inln fn heap_free_aligned(mutaptr ptr) noexce -> void
@@ -164,7 +161,8 @@ inln fn heap_resize_aligned(
     isize      new_size,
     isize      align,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (old_ptr == null) {
         return heap_alloc_aligned(new_size, align, flags);
     }
@@ -172,7 +170,7 @@ inln fn heap_resize_aligned(
         return {old_ptr, Invalid_Arg};
     }
     if (new_size <= old_size) {
-        return {old_ptr, Error_None};
+        return {old_ptr, none};
     }
 
     auto [new_ptr, err] = heap_alloc_aligned(new_size, align, flags & ~AllocFlag_Zero);
@@ -192,7 +190,7 @@ inln fn heap_resize_aligned(
     }
 
     heap_free_aligned(old_ptr);
-    return {new_ptr, Error_None};
+    return {new_ptr, none};
 }
 
 // NOTE:(manu)
@@ -209,7 +207,8 @@ inln fn heap_alloc_aligned(
     isize      size,
     isize      align,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (size <= 0) {
         return {null, Invalid_Arg};
     }
@@ -230,7 +229,7 @@ inln fn heap_alloc_aligned(
             return {null, err};
         }
     }
-    return {ptr, Error_None};
+    return {ptr, none};
 }
 
 inln fn heap_resize_aligned(
@@ -239,7 +238,8 @@ inln fn heap_resize_aligned(
     isize      new_size,
     isize      align,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (old_ptr == null) {
         return heap_alloc_aligned(new_size, align, flags);
     }
@@ -247,7 +247,7 @@ inln fn heap_resize_aligned(
         return {old_ptr, Invalid_Arg};
     }
     if (new_size <= old_size) {
-        return {old_ptr, Error_None};
+        return {old_ptr, none};
     }
     if (align < DEF_ALIGN) {
         align = DEF_ALIGN;
@@ -264,7 +264,7 @@ inln fn heap_resize_aligned(
             return {null, err};
         }
     }
-    return {ptr, Error_None};
+    return {ptr, none};
 }
 
 inln fn heap_free_aligned(mutaptr ptr) noexce -> void
@@ -282,7 +282,8 @@ inln fn heap_alloc_aligned(
     isize      size,
     isize      align,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (size <= 0) {
         return {null, Invalid_Arg};
     }
@@ -304,7 +305,7 @@ inln fn heap_alloc_aligned(
             return {null, zero_err};
         }
     }
-    return {ptr, Error_None};
+    return {ptr, none};
 }
 
 inln fn heap_free_aligned(mutaptr ptr) noexce -> void
@@ -320,7 +321,8 @@ inln fn heap_resize_aligned(
     isize      new_size,
     isize      align,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     if (old_ptr == null) {
         return heap_alloc_aligned(new_size, align, flags);
     }
@@ -328,7 +330,7 @@ inln fn heap_resize_aligned(
         return {old_ptr, Invalid_Arg};
     }
     if (new_size <= old_size) {
-        return {old_ptr, Error_None};
+        return {old_ptr, none};
     }
 
     auto [new_ptr, err] = heap_alloc_aligned(new_size, align, flags & ~AllocFlag_Zero);
@@ -348,7 +350,7 @@ inln fn heap_resize_aligned(
     }
 
     heap_free_aligned(old_ptr);
-    return {new_ptr, Error_None};
+    return {new_ptr, none};
 }
 
 #endif
@@ -361,14 +363,15 @@ fn heap_allocator_proc(
     mutaptr    old_ptr,
     isize      old_size,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     cx_unused(data);
     switch (mode) {
     case AllocMode_Alloc:
         return heap_alloc_aligned(size, align, flags);
     case AllocMode_Free:
         heap_free_aligned(old_ptr);
-        return {null, Error_None};
+        return {null, none};
     case AllocMode_Resize:
         return heap_resize_aligned(old_ptr, old_size, size, align, flags);
     case AllocMode_FreeAll:
@@ -381,8 +384,6 @@ inln fn heap_allocator() noexce -> Allocator
 {
     return {heap_allocator_proc, null};
 }
-
-////////////////////////////////////////////
 // Arena allocator
 
 // TODO:(manu) Extend functionality in relation with threads, virtual memory and context.
@@ -403,7 +404,7 @@ fn arena_init(Arena& a, isize cap) noexce -> ErrorCode
     a.data = byteptr(ptr);
     a.cap = cap;
     a.pos = 0;
-    return Error_None;
+    return none;
 }
 
 fn arena_deinit(Arena& a) noexce -> ErrorCode
@@ -423,7 +424,8 @@ fn arena_allocator_proc(
     mutaptr    old_ptr,
     isize      old_size,
     AllocFlag  flags
-) noexce -> Res<mutaptr, ErrorCode> {
+) noexce -> Res<mutaptr, ErrorCode>
+{
     Arena& arena = *cast(Arena*, data);
     switch (mode) {
     case AllocMode_Alloc: {
@@ -451,15 +453,13 @@ fn arena_allocator_proc(
             }
         }
         arena.pos = offset + size;
-        return {ptr, Error_None};
+        return {ptr, none};
     }
     case AllocMode_Free:
         return {null, Alloc_InvalidMode};
     case AllocMode_Resize: {
         if (old_ptr == null) {
-            return arena_allocator_proc(
-                data, AllocMode_Alloc, size, align, null, 0, flags
-            );
+            return arena_allocator_proc(data, AllocMode_Alloc, size, align, null, 0, flags);
         }
         if (size <= 0 || old_size < 0) {
             return {old_ptr, Invalid_Arg};
@@ -482,17 +482,16 @@ fn arena_allocator_proc(
             } else {
                 arena.pos -= old_size - size;
             }
-            return {old_ptr, Error_None};
+            return {old_ptr, none};
         }
 
         if (size <= old_size) {
-            return {old_ptr, Error_None};
+            return {old_ptr, none};
         }
 
         isize prev_pos = arena.pos;
-        auto [ptr, err] = arena_allocator_proc(
-            data, AllocMode_Alloc, size, align, null, 0, flags & ~AllocFlag_Zero
-        );
+        auto [ptr, err] = arena_allocator_proc(data, AllocMode_Alloc, size, align, null, 0,
+                                               flags & ~AllocFlag_Zero);
         if (err) {
             return {old_ptr, err};
         }
@@ -507,11 +506,11 @@ fn arena_allocator_proc(
                 return {old_ptr, err};
             }
         }
-        return {ptr, Error_None};
+        return {ptr, none};
     }
     case AllocMode_FreeAll:
         arena.pos = 0;
-        return {null, Error_None};
+        return {null, none};
     }
     cx_unreachable;
 }

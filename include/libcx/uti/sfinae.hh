@@ -7,18 +7,31 @@ namespace cx {
 inline namespace uti {
 
 // Enable if
-  
-template<bool, typename T = void> struct ___enable_if{};
-template<typename T> struct ___enable_if<true, T> { using Type = T; };
-template<bool B, typename T = void> using enable_if = typename ___enable_if<B, T>::Type;
+
+template<bool, typename T = void>
+struct ___enable_if
+{};
+template<typename T>
+struct ___enable_if<true, T>
+{
+    using Type = T;
+};
+template<bool B, typename T = void>
+using enable_if = typename ___enable_if<B, T>::Type;
 
 // Conditional
 
 template<bool B, typename True, typename False>
-struct ___condition { using Type = False; };
+struct ___condition
+{
+    using Type = False;
+};
 
 template<typename True, typename False>
-struct ___condition<true, True, False> { using Type = True; };
+struct ___condition<true, True, False>
+{
+    using Type = True;
+};
 
 template<bool B, typename True, typename False>
 using condition = typename ___condition<B, True, False>::Type;

@@ -12,20 +12,33 @@ namespace cx {
 
 using cstring = char const*;
 
-template<typename T>     using Void = void;
-template<typename T>     using initls = std::initializer_list<T>;
+template<typename T>
+using Void = void;  // templated void for sfinae
 
-struct NoneType {};
-onedef cons NoneType None;
+template<typename T>
+using initls = std::initializer_list<T>;
 
-struct ZeroType {
-    cons operator isize() const noexce { return 0; }
-    cons operator void*() const noexce { return nullptr; }
-    cons operator decltype(nullptr)() const noexce { return nullptr; }
+struct EmptyType
+{};
+onedef cons EmptyType Empty;
+
+struct ZeroType
+{
+    cons operator isize() const noexce
+    {
+        return 0;
+    }
+    cons operator void*() const noexce
+    {
+        return nullptr;
+    }
+    cons operator declt(nullptr)() const noexce
+    {
+        return nullptr;
+    }
 };
 onedef cons ZeroType null;
 onedef cons ZeroType none;
-
 
 }       // namespace cx
 #endif  // CX_CONF_TYPE_HH

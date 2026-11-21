@@ -9,121 +9,67 @@
 #include "libcx/concept/lifetime.hh"
 #include "libcx/mem/common.hh"
 #include "libcx/mem/pointer.hh"
-
-////////////////////////////////////////////
 // Prelude
 
 namespace cx {
 inline namespace mem {
 
-onedef cons u32 AllocFlags_None    = 0;
-onedef cons u32 AllocFlags_Zero    = BIT<0>;
-onedef cons u32 AllocFlags_Default = AllocFlags_Zero;
-
-///////////////////////////////////////////
+onedef cons u32 AllocFlags_None     = 0;
+onedef cons u32 AllocFlags_Zero     = BIT<0>;
+onedef cons u32 AllocFlags_Default  = AllocFlags_Zero;
 // Allocator contract
 
-template<typename Alc>
-concept SomeAllocator = requires(
-    Alc&     alc,
-    mutaptr  old_ptr,
-    isize    old_size,
-    isize    new_size,
-    isize    old_align,
-    isize    new_align,
-    u32      flags
-) {
-    { aligned_alloc(alc, new_size, new_align, flags) }
-    noexce -> SameAs<Res<mutaptr, ErrorCode>>;
+template<typename Alc> concept SomeAllocator = requires(Alc& alc, mutaptr old_ptr, isize old_size, isize new_size,
+                                 isize old_align, isize new_align, u32 flags) {
+    { aligned_alloc(alc, new_size, new_align, flags) } noexce -> SameAs<Res<mutaptr, ErrorCode>>;
 
-    { aligned_resize(alc, old_ptr, new_size, old_size, new_align, old_align, flags) }
-    noexce -> SameAs<Res<mutaptr, ErrorCode>>;
+    {
+        aligned_resize(alc, old_ptr, new_size, old_size, new_align, old_align, flags)
+    } noexce -> SameAs<Res<mutaptr, ErrorCode>>;
 
     { aligned_free(alc, old_ptr) } noexce -> SameAs<ErrorCode>;
 
     // { aligned_free_all(alc, old_ptr) } noexce -> SameAs<ErrorCode>;
 };
-
-////////////////////////////////////////////
 // Allocator public API
 
 // Static allocator interface.
 
-#define ALIGNED_ALLOC(name, Alc)            \
-    cons fn name(                           \
-        Alc&   alc,                         \
-        isize  size,                        \
-        isize  align  =  DEF_ALIGN,         \
-        u32    flags  =  AllocFlags_Default \
-    ) noexce -> Res<mutaptr, ErrorCode>
+#define ALIGNED_ALLOC(name, Alc)                                                                   \
+    cons fn name(Alc& alc, isize size, isize align = DEF_ALIGN, u32 flags = AllocFlags_Default)    \
+        noexce -> Res<mutaptr, ErrorCode>
 
-#define ALIGNED_RESIZE(name, Alc)                 \
-    cons fn name(                                 \
-        Alc&     alc,                             \
-        mutaptr  old_ptr,                         \
-        isize    old_size,                        \
-        isize    new_size,                        \
-        isize    old_align  =  DEF_ALIGN,         \
-        isize    new_align  =  DEF_ALIGN,         \
-        u32      flags      =  AllocFlags_Default \
-    ) noexce -> Res<mutaptr, ErrorCode>
+#define ALIGNED_RESIZE(name, Alc)                                                                  \
+    cons fn name(Alc& alc, mutaptr old_ptr, isize old_size, isize new_size,                        \
+                 isize old_align = DEF_ALIGN, isize new_align = DEF_ALIGN,                         \
+                 u32 flags = AllocFlags_Default) noexce -> Res<mutaptr, ErrorCode>
 
-#define ALIGNED_FREE(name, Alc) \
-    cons fn name(               \
-        Alc& alc, mutaptr ptr   \
-    ) noexce -> ErrorCode
+#define ALIGNED_FREE(name, Alc) cons fn name(Alc& alc, mutaptr ptr) noexce -> ErrorCode
 
 // Runtime allocator interface.
 
-#define ALIGNED_ALLOC_VIEW(name)              \
-    fn name(                                  \
-        mutaptr  alc,                         \
-        isize    size,                        \
-        isize    align  =  DEF_ALIGN,         \
-        u32      flags  =  AllocFlags_Default \
-    ) noexce -> Res<mutaptr, ErrorCode>
+#define ALIGNED_ALLOC_VIEW(name)                                                                   \
+    fn name(mutaptr alc, isize size, isize align = DEF_ALIGN, u32 flags = AllocFlags_Default)      \
+        noexce -> Res<mutaptr, ErrorCode>
 
-#define ALIGNED_RESIZE_VIEW(name)                 \
-    fn name(                                      \
-        mutaptr  alc,                             \
-        mutaptr  old_ptr,                         \
-        isize    old_size,                        \
-        isize    new_size,                        \
-        isize    old_align  =  DEF_ALIGN,         \
-        isize    new_align  =  DEF_ALIGN,         \
-        u32      flags      =  AllocFlags_Default \
-    ) noexce -> Res<mutaptr, ErrorCode>
+#define ALIGNED_RESIZE_VIEW(name)                                                                  \
+    fn name(mutaptr alc, mutaptr old_ptr, isize old_size, isize new_size,                          \
+            isize old_align = DEF_ALIGN, isize new_align = DEF_ALIGN,                              \
+            u32 flags = AllocFlags_Default) noexce -> Res<mutaptr, ErrorCode>
 
-#define ALIGNED_FREE_VIEW(name)  \
-    fn name(                     \
-        mutaptr alc, mutaptr ptr \
-    ) noexce -> ErrorCode
-
-////////////////////////////////////////////
+#define ALIGNED_FREE_VIEW(name) fn name(mutaptr alc, mutaptr ptr) noexce -> ErrorCode
 // Allocator view runtime adapter
 
 // Allocator view definition.
 
-using AlignedFreeView = func(
-    mutaptr data, mutaptr ptr
-) noexce -> ErrorCode;
+using AlignedFreeView = func(mutaptr data, mutaptr ptr) noexce -> ErrorCode;
 
-using AlignedAllocView = func( 
-    mutaptr  data,
-    isize    size,
-    isize    align,
-    u32      flags
-) noexce -> Res<mutaptr, ErrorCode>;
+using AlignedAllocView = func(mutaptr data, isize size, isize align, u32 flags) noexce
+    -> Res<mutaptr, ErrorCode>;
 
-using AlignedResizeView = func(
-    mutaptr  data, 
-    mutaptr  old_ptr,
-    isize    new_size,
-    isize    old_size,
-    isize    new_align,
-    isize    old_align,
-    u32      flags
-) noexce -> Res<mutaptr, ErrorCode>;
+using AlignedResizeView = func(mutaptr data, mutaptr old_ptr, isize new_size, isize old_size,
+                               isize new_align, isize old_align, u32 flags) noexce
+    -> Res<mutaptr, ErrorCode>;
 
 //  fn DoSomethingHuge(Alc: allocator_view_t) -> error_code_t;
 
@@ -144,7 +90,8 @@ ALIGNED_ALLOC_VIEW(aligned_alloc_view)
 template<SomeAllocator Alc>
 ALIGNED_RESIZE_VIEW(aligned_resize_view)
 {
-    return aligned_resize(cast(Alc*, alc)->data, old_ptr, old_size, new_size, old_align, new_align, flags);
+    return aligned_resize(cast(Alc*, alc)->data, old_ptr, old_size, new_size, old_align, new_align,
+                          flags);
 }
 
 template<SomeAllocator Alc>
@@ -173,23 +120,19 @@ ALIGNED_FREE(aligned_free, AllocatorView)
 template<SomeAllocator Alc>
 nodisc fn allocator_view(Alc& alc) noexce -> AllocatorView
 {
-    return AllocatorView{
-        mutaptr(&alc),
-        aligned_alloc_view<Alc>,
-        aligned_resize_view<Alc>,
-        aligned_free_view<Alc>
-    };
+    return AllocatorView{mutaptr(&alc), aligned_alloc_view<Alc>, aligned_resize_view<Alc>,
+                         aligned_free_view<Alc>};
 }
-
-///////////////////////////////////////////
 // Heap allocator definition
 
 struct HeapAllocator
-{
-};
+{};
 
 glob HeapAllocator HEAP_ALLOCATOR{};
-comp fn heap_allocator() noexce -> HeapAllocator& { return HEAP_ALLOCATOR; }
+comp fn heap_allocator() noexce -> HeapAllocator&
+{
+    return HEAP_ALLOCATOR;
+}
 
 cons fn heap_alloc(isize size, b32 flags = AllocFlags_Default) noexce -> mutaptr
 {
@@ -220,12 +163,13 @@ ALIGNED_FREE(aligned_free, HeapAllocator)
     // - Should return void? Should passing a null pointer be an error?
     cx_unused(alc);
     if (ptr != null) like {
-        ::free(cast(void** ,ptr)[-1]);
+        ::free(cast(void**, ptr)[-1]);
     }
     return none;
 }
 
-ALIGNED_ALLOC(aligned_alloc, HeapAllocator) {
+ALIGNED_ALLOC(aligned_alloc, HeapAllocator)
+{
     // XXX:(manu)
     // - Should I impose bytes % align == 0 like std::aligned_alloc?
     // - What if size < 0? Should I implement some logic?
@@ -245,7 +189,7 @@ ALIGNED_ALLOC(aligned_alloc, HeapAllocator) {
     }
 
     mutaptr aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), align);
-    (cast(void** ,aligned_mem))[-1] = alloced_mem;
+    (cast(void**, aligned_mem))[-1] = alloced_mem;
 
     if (flags & AllocFlags_Zero) {
         mem_zero(aligned_mem, size);
@@ -254,13 +198,13 @@ ALIGNED_ALLOC(aligned_alloc, HeapAllocator) {
     return {aligned_mem, none};
 }
 
-
 /**
     @ret
     - `[new_ptr, none]` on success
     - otherwise `panic`
 **/
-ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
+ALIGNED_RESIZE(aligned_resize, HeapAllocator)
+{
     if (new_size <= 0) {
         aligned_free(alc, old_ptr);
         return {null, null};
@@ -286,18 +230,18 @@ ALIGNED_RESIZE(aligned_resize, HeapAllocator) {
             return {null, Alloc_Exhausted};
         }
         aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), new_align);
-        (cast(void** ,aligned_mem))[-1] = alloced_mem;
+        (cast(void**, aligned_mem))[-1] = alloced_mem;
         mem_copy(aligned_mem, old_ptr, cx_min2(old_size, new_size));
         aligned_free(alc, old_ptr);
 
     } else {
-        mutaptr base_ptr = cast(void** ,old_ptr)[-1];
+        mutaptr base_ptr = cast(void**, old_ptr)[-1];
         alloced_mem = heap_resize(base_ptr, space);
         if (alloced_mem == null) {
             return {null, Alloc_Exhausted};
         }
         aligned_mem = align_up(ptr_add(alloced_mem, PTR_SIZE), new_align);
-        (cast(void** ,aligned_mem))[-1] = alloced_mem;
+        (cast(void**, aligned_mem))[-1] = alloced_mem;
     }
 
     if ((flags & AllocFlags_Zero) && (new_size > old_size)) {
@@ -319,8 +263,6 @@ cons fn aligned_alloc_type(HeapAllocator alc, isize num) -> Res<T*, ErrorCode>
     auto [ptr, err] = aligned_alloc(alc, num * size_of(T), align_of(T)) or_return {null, err};
     return {cast(T*, ptr), err};
 }
-
-////////////////////////////////////////////
 // Arena allocator definition
 
 struct Arena
@@ -331,13 +273,16 @@ struct Arena
     isize    prev_off{};
 };
 
-struct ArenaAllocator { Arena& arena; };
+struct ArenaAllocator
+{
+    Arena& arena;
+};
 static_assert(size_of(ArenaAllocator) == PTR_SIZE);
 
 cons fn arena_init(Arena& arena, isize cap) noexce -> ErrorCode
 {
-    auto [ptr, err] = aligned_alloc(heap_allocator(), cap, DEF_ALIGN, AllocFlags_Default)
-        or_return err;
+    auto [ptr, err] =
+        aligned_alloc(heap_allocator(), cap, DEF_ALIGN, AllocFlags_Default) or_return err;
     arena.data = byteptr(ptr);
     arena.data_cap = cap;
     arena.curr_off = 0;

@@ -9,27 +9,28 @@
 namespace cx {
 inline namespace mem {
 
-// /**
-//     Prints the full address of `ptr` in hex.
-//   
-//     @para
-//     - `ptr`: the pointer to print
-// **/
-// onedef fn print_full_ptr(mutaptr ptr) noexce -> void
-// {
-//     printf("%0*" PRIXPTR "\n", int(size_of(uptr) * 2), uptr(ptr));
-// }
+// TODO:(manu) Implement without relying on standrd library
+//  /**
+//      Prints the full address of `ptr` in hex.
+//
+//      @arg
+//      - `ptr`: the pointer to print
+//  **/
+//  onedef fn print_full_ptr(mutaptr ptr) noexce -> void
+//  {
+//      printf("%0*" PRIXPTR "\n", int(size_of(uptr) * 2), uptr(ptr));
+//  }
 
 /**
     Aligns `ptr` upward to the `aln` boundary.
-    @para
+    @arg
     - `ptr`: the pointer
     - `aln`: the alignment.
-    @ret 
+    @ret
     - The aligned pointer.
-    @pre
+    @req
     - `aln` is a power of two.
-**/  
+**/
 inln cons fn align_up(mutaptr ptr, isize aln) noexce -> mutaptr
 {
     // assert(uti::is_power_of_two(aln));
@@ -38,28 +39,28 @@ inln cons fn align_up(mutaptr ptr, isize aln) noexce -> mutaptr
 
 /**
     Aligns `ptr` upward to the `aln` boundary.
-    @para
+    @arg
     - `ptr`: the pointer.
     - `aln`: the alignment.
-    @ret 
+    @ret
     - The aligned pointer.
-    @pre
+    @req
     - `aln` is a power of two.
-**/  
+**/
 inln cons fn align_up(uptr ptr, isize aln) noexce -> uptr
 {
-    // assert(is_power_of_two(aln)); // XXX: 
+    // cx_assert(is_power_of_two(aln));  // XXX:(manu)
     return (ptr + (aln - 1)) & ~(uptr(aln - 1));
 }
 
 /**
     Aligns `off` upward to the `aln` boundary.
-    @para
+    @arg
     - `off`: the offset or size in bytes.
     - `aln`: the alignment.
     @ret
     - The aligned offset or size.
-    @pre
+    @req
     - `aln` is a power of two.
 **/
 inln cons fn align_up(isize off, isize aln) noexce -> isize
@@ -70,7 +71,7 @@ inln cons fn align_up(isize off, isize aln) noexce -> isize
 
 /**
     Aligns `ptr` upward to the alignment of `Tp`.
-    @para
+    @arg
     - `Tp`: the type to align to.
     - `ptr`: the pointer.
     @ret
@@ -83,13 +84,13 @@ inln cons fn align_up(mutaptr ptr) noexce -> mutaptr
 }
 
 /**
-  Aligns `ptr` upward to the alignment of `Tp`.
-  @para
-  - `Tp`: the type to align to.
-  - `ptr`: the pointer.
-  @ret
-  - The aligned pointer.
-**/  
+    Aligns `ptr` upward to the alignment of `Tp`.
+    @arg
+    - `Tp`: the type to align to.
+    - `ptr`: the pointer.
+    @ret
+    - The aligned pointer.
+**/
 template<typename Tp>
 inln cons fn align_up(uptr ptr) noexce -> uptr
 {
@@ -98,7 +99,7 @@ inln cons fn align_up(uptr ptr) noexce -> uptr
 
 /**
     Aligns `off` upward to the alignment of `Tp`.
-    @para
+    @arg
     - `Tp`: the type to align to.
     - `off`: the initial offset.
     @ret
@@ -111,13 +112,13 @@ inln cons fn align_up(isize off) noexce -> isize
 }
 
 /**
-  Adds `off` to `ptr` and returns the result.
-  @para
-  - `ptr`: the pointer.
-  - `off`: the offset.
-  @ret
-  - The result pointer.
-**/  
+    Adds `off` to `ptr` and returns the result.
+    @arg
+    - `ptr`: the pointer.
+    - `off`: the offset.
+    @ret
+    - The result pointer.
+**/
 inln cons fn ptr_add(auto* ptr, isize off) noexce -> auto*
 {
     return declt(ptr)(byteptr(ptr) + off);
@@ -125,10 +126,10 @@ inln cons fn ptr_add(auto* ptr, isize off) noexce -> auto*
 
 /**
     Subtracts `off` from `ptr` and returns the result.
-    @para
+    @arg
     - `ptr`: the pointer.
     - `off`: the offset.
-    @ret 
+    @ret
     - the result pointer.
 **/
 inln cons fn ptr_sub(auto* ptr, isize off) noexce -> auto*
@@ -138,7 +139,7 @@ inln cons fn ptr_sub(auto* ptr, isize off) noexce -> auto*
 
 /**
     Computes the difference between `end` and `beg`.
-    @para
+    @arg
     - `beg`: the beginning pointer.
     - `end`: the end pointer.
     @ret
@@ -151,12 +152,12 @@ inln cons fn ptr_diff(auto* beg, auto* end) noexce -> isize
 
 /**
     Tags the given pointer with the given `tag`.
-    @para
+    @arg
     - `ptr`: the pointer.
     - `tag`: the tag.
     @ret
     - The tagged pointer.
-**/  
+**/
 template<SomeRawPointer Ptr>
 inln cons fn ptr_tag(mutaptr ptr, uptr tag) noexce -> Ptr
 {
@@ -165,12 +166,12 @@ inln cons fn ptr_tag(mutaptr ptr, uptr tag) noexce -> Ptr
 
 /**
     Removes the tag from the given pointer.
-    @para
+    @arg
     - `ptr`: the pointer.
     - `tag`: the tag.
     @ret
     - The untagged pointer.
-**/  
+**/
 template<SomeRawPointer Ptr>
 inln cons fn ptr_untag(mutaptr ptr, uptr msk) noexce -> Ptr
 {

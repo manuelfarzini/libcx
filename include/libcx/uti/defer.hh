@@ -13,35 +13,34 @@ template<typename F>
 struct DeferWrapper
 {
     F f;
-    inln cons DeferWrapper(F&& f) : f(forward<F>(f)) {}
-    inln cons ~DeferWrapper() { f(); };
+    inln cons DeferWrapper(F&& f) : f(forward<F>(f))
+    {
+    }
+    inln cons ~DeferWrapper()
+    {
+        f();
+    };
 };
 
 template<typename F>
 inln cons fn defer_wrapper(F&& f) noexce -> DeferWrapper<F>
 {
-  return DeferWrapper<F>(forward<F>(f));
+    return DeferWrapper<F>(forward<F>(f));
 }
 
 #ifndef defer
-  #define defer(_BODY_) \
-    fn CX_UNIQ(_defer_) = cx::uti::defer_wrapper([&]() inln_clos { _BODY_; })
+#    define defer(_BODY_) fn CX_UNIQ(_defer_) = cx::uti::defer_wrapper([&]() inln_clos { _BODY_; })
 #endif
 
-
 #ifndef cx_defer_loop
-#define cx_defer_loop(_cx_dl_init_, _cx_dl_clean_)           \
-  for (u8 _cx_dl_stop_ = 0, _cx_dl_once_ = 1;                \
-       _cx_dl_once_;                                         \
-       CX_EMPTY)                                             \
-    for (_cx_dl_init_;                                       \
-         !_cx_dl_stop_;                                      \
-         _cx_dl_stop_ ? (_cx_dl_clean_, _cx_dl_once_ = 0, 1) \
-                        : (_cx_dl_once_ = 0, 0))
+#    define cx_defer_loop(_cx_dl_init_, _cx_dl_clean_)                                             \
+        for (u8 _cx_dl_stop_ = 0, _cx_dl_once_ = 1; _cx_dl_once_; CX_EMPTY)                        \
+            for (_cx_dl_init_; !_cx_dl_stop_;                                                      \
+                 _cx_dl_stop_ ? (_cx_dl_clean_, _cx_dl_once_ = 0, 1) : (_cx_dl_once_ = 0, 0))
 #endif
 
 #ifndef cx_dl_stop
-#define cx_dl_stop() _cx_dl_stop_ = 1
+#    define cx_dl_stop() _cx_dl_stop_ = 1
 #endif
 
 }       // namespace uti
@@ -51,7 +50,7 @@ inln cons fn defer_wrapper(F&& f) noexce -> DeferWrapper<F>
 /*
 
 Example
- 
+
 fn test() -> void
 {
     cx_defer_loop (auto x = 0, printf("cleanup\n")) {

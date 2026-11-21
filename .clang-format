@@ -138,13 +138,13 @@ AllowShortLambdasOnASingleLine: Inline
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true
-  AfterClass: false
-  AfterStruct: false
-  AfterEnum: false
+  AfterClass: true
+  AfterStruct: true
+  AfterEnum: true
   AfterControlStatement: Never
   AfterNamespace: false
   AfterObjCDeclaration: false
-  AfterUnion: false
+  AfterUnion: true
   AfterCaseLabel: false
   AfterExternBlock: false
   BeforeCatch: false

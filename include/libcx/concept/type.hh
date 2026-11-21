@@ -9,7 +9,7 @@
 
 namespace cx {
 inline namespace uti {
-  
+
 template<typename T> concept SomeSintegral = is_sintegral<T>;
 template<typename T> concept SomeUintegral = is_uintegral<T>;
 template<typename T> concept SomeIntegral = is_sintegral<T> || is_uintegral<T>;
@@ -21,8 +21,7 @@ template<typename T> concept SomeCallable = is_callable<T>;
 template<typename T> concept SomeRawPointer = is_raw_ptr<T>;
 template<typename U> concept SomePlainArithmetic = is_arithmetic<U> && !is_cv_qual<U>;
 
-template<typename T>
-concept SomePlainRawPointer = SomeRawPointer<T> && !is_cv_qual<T> && !is_cv_qual<rm_ptr<T>>;
+template<typename T> concept SomePlainRawPointer = SomeRawPointer<T> && !is_cv_qual<T> && !is_cv_qual<rm_ptr<T>>;
 
 template<typename T> concept PlainPassiveValue = is_passive_value<T> && !is_cv_qual<T>;
 

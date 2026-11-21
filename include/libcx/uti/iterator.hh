@@ -10,14 +10,20 @@ namespace cx {
 inline namespace uti {
 
 template<typename It>
-struct RevIterator {
+struct RevIterator
+{
     using Iter = It;
     Iter cur;
 
     cons RevIterator() = default;
-    cons RevIterator(Iter it) : cur(it) {}
+    cons RevIterator(Iter it) : cur(it)
+    {
+    }
 
-    cons Iter base(this auto const& self) noexce { return self.cur; }
+    cons Iter base(this auto const& self) noexce
+    {
+        return self.cur;
+    }
 
     cons fn operator*(this auto const& self) noexce -> declt(auto)
     {
@@ -28,7 +34,7 @@ struct RevIterator {
 
     cons fn operator->(this auto const& self) noexce -> auto
     {
-        return &(*self);  // XXX: proxy?
+        return &(*self);  // XXX:(manu) proxy?
     }
 
     cons fn operator++(this auto& self) noexce -> declt(self)
@@ -74,7 +80,7 @@ cons fn rev_iterator(It it) noexce -> RevIterator<It>
     return RevIterator<It>(it);
 }
 
-// FIX:
+// FIX:(manu)
 inln cons fn beg(auto& c) noexce -> declt(auto)
 {
     return iter_in(c)(c.begin());

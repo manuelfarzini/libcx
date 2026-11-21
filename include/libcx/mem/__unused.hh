@@ -1,6 +1,7 @@
-/*
+#ifndef CX_MEM_UNUSED_HH
+#define CX_MEM_UNUSED_HH
 
-//--------------------------------------------
+/*
 // Base
 
 // using Align = std::align_val_t;
@@ -8,8 +9,8 @@
 // onedef cons Nothrow No_Throw = std::nothrow;
 
 onedef cons fn u64__mem_set(mutaptr data, u8 v, usize n) -> ErrorCode {
-//  NOTE(manu)
-//  u64 splat version, it's faster than gb.h inspired version but it's 
+//  NOTE:(manu)
+//  u64 splat version, it's faster than gb.h inspired version but it's
 //  slower than libc ::memset
     if (data == null) unlike {
       return Invalid_Ptr;
@@ -50,7 +51,7 @@ onedef cons fn u64__mem_set(mutaptr data, u8 v, usize n) -> ErrorCode {
 }
 
 onedef cons fn gb__mem_set(mutaptr data, u8 v, usize n) -> ErrorCode {
-//  NOTE(manu) 
+//  NOTE:(manu)
 //  gb.h mem_set inspired version
 //  maybe I should use conditional compilation
 //  probably can be faster reasoning on alignment
@@ -124,10 +125,10 @@ onedef cons fn gb__mem_set(mutaptr data, u8 v, usize n) -> ErrorCode {
     return none;
 }
 
-onedef cons fn odin__mem_zero_condition(mutaptr data, isize size) -> void
-//  NOTE(manu)
-//  odin like version
-//  it's slower compared to the gb.h memset inspired one
+onedef cons fn odin__mem_zero_condition(
+    mutaptr  data,
+    isize    size
+) -> void // NOTE:(manu) // odin like version // it's slower compared to the gb.h memset inspired one
 {
     if (data == null || size <= 0) {
         return;
@@ -156,3 +157,5 @@ onedef cons fn odin__mem_zero_condition(mutaptr data, isize size) -> void
 }
 
 */
+
+#endif  // CX_MEM_UNUSED_HH

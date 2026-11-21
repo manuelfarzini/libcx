@@ -1,13 +1,14 @@
-/** @file libcx/io.hh **/
+/** @file libcx/__io/io.hh **/
 
-#ifndef CX_IO_IO_HH
-#define CX_IO_IO_HH
+#ifndef CX___IO_IO_HH
+#define CX___IO_IO_HH
 
 #include <libcx/conf.hh>
 #include <libcx/uti/utilities.hh>
 #include <libcx/err/error.hh>
 
-namespace cx::io {
+namespace cx {
+inline namespace io {
 
 template<typename... Ts>
 inln onedef cons fn printf(fmt::format_string<Ts...> fmts, Ts&&... args) noexce -> void
@@ -16,32 +17,39 @@ inln onedef cons fn printf(fmt::format_string<Ts...> fmts, Ts&&... args) noexce 
 }
 
 template<typename... Ts>
-inln onedef cons fn printfn(fmt::format_string<Ts...> fmts, Ts&&... args) noexce
-    -> void
+inln onedef cons fn printfn(fmt::format_string<Ts...> fmts, Ts&&... args) noexce -> void
 {
     fast_io::io::println(fmt::format(fmts, std::forward<Ts>(args)...));
 }
 
-template<typename... Ts> inln onedef cons fn print(Ts&&... args) noexce -> void
+template<typename... Ts>
+inln onedef cons fn print(Ts&&... args) noexce -> void
 {
     fast_io::io::print(args...);
 }
 
-template<typename... Ts> inln onedef cons fn printn(Ts&&... args) noexce -> void
+template<typename... Ts>
+inln onedef cons fn printn(Ts&&... args) noexce -> void
 {
     fast_io::io::println(args...);
 }
 
 template<typename... Ts>
 inln onedef cons fn fprintf(
-    fast_io::obuf_file obuf, fmt::format_string<Ts...> fmts, Ts&&... args
-) noexce -> void {
+    fast_io::obuf_file         obuf,
+    fmt::format_string<Ts...>  fmts,
+    Ts&&...                    args
+) noexce -> void
+{
     fast_io::io::print(obuf, fmt::format(fmts, std::forward<Ts>(args)...));
 }
 
 template<typename... Ts>
-inln onedef cons fn
-fprintfn(FILE* ofile, fmt::format_string<Ts...> fmts, Ts&&... args) noexce -> void
+inln onedef cons fn fprintfn(
+    FILE*                      ofile,
+    fmt::format_string<Ts...>  fmts,
+    Ts&&...                    args
+) noexce -> void
 {
     fast_io::io::println(ofile, fmt::format(fmts, std::forward<Ts>(args)...));
 }
@@ -58,8 +66,7 @@ inln onedef cons fn strview(Rng&& r) noexce -> auto
     return fast_io::mnp::strvw(r);
 }
 
-nodisc onedef cons fn fopen(char const* fpath, char const* mode) noexce
-    -> Result<fast_io::c_file>
+nodisc onedef cons fn fopen(char const* fpath, char const* mode) noexce -> Result<fast_io::c_file>
 {
     FILE* f = std::fopen(fpath, mode);
     if (f == null) {
@@ -69,5 +76,6 @@ nodisc onedef cons fn fopen(char const* fpath, char const* mode) noexce
     return {fast_io::c_file{f}, null};
 }
 
-}  // namespace cx::io
-#endif  // CX_IO_IO_HH
+}       // namespace io
+}       // namespace cx
+#endif  // CX___IO_IO_HH

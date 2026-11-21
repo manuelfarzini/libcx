@@ -11,9 +11,8 @@ inline namespace math {
 
 /** Computes the maximum value. **/
 template<typename Head, typename... Rest>
-inln cons fn max(Head head, Rest... rest) noexce -> Head with(
-    va_size(Rest) > 0 && va_is_homo<Head, Rest...> && size_of(Head) <= 8
-)
+inln cons fn max(Head head, Rest... rest) noexce -> Head
+    with (va_size(Rest) > 0 && va_is_homo<Head, Rest...> && size_of(Head) <= 8)
 {
     Head max = head;
     ((max = max < rest ? rest : max), ...);

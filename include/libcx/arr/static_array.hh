@@ -11,8 +11,8 @@
 namespace cx {
 inline namespace arr {
 
-template<ValueInitble E, isize Cap, typename S = isize> with (Cap > 0)
-struct StaticArray
+template<ValueInitble E, isize Cap, typename S = isize>
+with (Cap > 0) struct StaticArray
 {
     CX_DEFINE_MEMBER_TYPES(E, S);
     using Self = StaticArray<Elem, Cap, Size>;
@@ -20,24 +20,42 @@ struct StaticArray
     onedef glob cons Size cap{Cap};
     Elem buf[Cap]{};
 
-    inln cons fn operator[](usize const i) noexce -> Elem& { return buf[i]; }
-    inln cons fn operator[](usize const i) const noexce -> Elem const& { return buf[i]; }
+    inln cons fn operator[](usize const i) noexce -> Elem&
+    {
+        return buf[i];
+    }
+    inln cons fn operator[](usize const i) const noexce -> Elem const&
+    {
+        return buf[i];
+    }
 
-    inln cons fn begin() noexce -> Iter { return buf; }
-    inln cons fn end() noexce -> Iter { return buf + cap; }
-    inln cons fn begin() const noexce -> Kter { return buf; }
-    inln cons fn end() const noexce -> Kter { return buf + cap; }
+    inln cons fn begin() noexce -> Iter
+    {
+        return buf;
+    }
+    inln cons fn end() noexce -> Iter
+    {
+        return buf + cap;
+    }
+    inln cons fn begin() const noexce -> Kter
+    {
+        return buf;
+    }
+    inln cons fn end() const noexce -> Kter
+    {
+        return buf + cap;
+    }
 };
 
 CX_CONCEPT_GEN_TEMPL(StaticArray, is_static_array, SomeStaticArray,
                      VA_(typename Tp, usize Cap, typename Sz), VA_(Tp, Cap, Sz));
 
-template<ValueInitble E> StaticArray(E) -> StaticArray<E, 1>;
+template<ValueInitble E>
+StaticArray(E) -> StaticArray<E, 1>;
 
-// TODO: convertible_to to bind to the first passed element type e.g. `StaticArray arr = {1u, 2, 3}`
+// TODO:(manu) convertible_to to bind to the first passed element type e.g. `StaticArray arr = {1u, 2, 3}`
 template<typename E, typename... Es>
 StaticArray(E, Es...) -> StaticArray<enable_if<bvariand<same_as<E, Es>...>, E>, 1 + sizeof...(Es)>;
-
 
 template<typename Arr, typename E> proposition is_static_array_of = false;
 template<typename T, isize Cap, typename S> proposition is_static_array_of<StaticArray<T, Cap, S>, T> = true;

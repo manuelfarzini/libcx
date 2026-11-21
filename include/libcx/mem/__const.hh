@@ -1,6 +1,8 @@
+#ifndef CX_MEM___CONST_HH
+#define CX_MEM___CONST_HH
+
 #include "libcx/conf/prelude.hh"
 #include "libcx/arr/inline_array.hh"
-
 
 // template<isize S, auto tag, isize A = align_of(u8)>
 // align_as(A) priv u8 static_buff[S]{};
@@ -13,31 +15,37 @@ inline namespace mem {
 
 cons usize STATIC_ALLOC_LIMIT = 1024 * 1024 * 1024;
 
-#define clos_tag []{}
+#define clos_tag [] {}
 
 template<isize Cap>
-struct ConsAllocator {
+struct ConsAllocator
+{
     CX_DEFINE_MEMBER_TYPES(u8, isize);
     onedef glob cons isize cap{Cap};
     InlineArray<byteptr, cap> buf{};
 };
 
-CX_CONCEPT_GEN_TEMPL(
-    ConsAllocator, is_static_allocator, SomeStaticAllocator, isize Cap, Cap
-);
+CX_CONCEPT_GEN_TEMPL(ConsAllocator, is_static_allocator, SomeStaticAllocator, isize Cap, Cap);
 
-comp fn get_cap(SomeStaticAllocator auto& alc) -> isize { return alc.buf.cap; }
-comp fn get_len(SomeStaticAllocator auto& alc) -> isize { return alc.buf.len; }
-
+comp fn get_cap(SomeStaticAllocator auto& alc) -> isize
+{
+    return alc.buf.cap;
+}
+comp fn get_len(SomeStaticAllocator auto& alc) -> isize
+{
+    return alc.buf.len;
+}
 
 template<isize Cap>
-comp fn cons_allocator() -> ConsAllocator<Cap> { return {}; }
-
+comp fn cons_allocator() -> ConsAllocator<Cap>
+{
+    return {};
 }
-}
 
-#define CX_TEST_CONST_ALLOCATOR 1
-#if CX_TEST_CONST_ALLOCATOR
+}       // namespace mem
+}       // namespace cx
+
+#if defined(CX_TEST_CONST_ALLOCATOR)
 
 using namespace cx;
 
@@ -57,3 +65,4 @@ comp fn test_launch_const_alloc_base() -> void
 
 #endif
 
+#endif  // CX_MEM___CONST_HH

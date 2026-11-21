@@ -5,7 +5,7 @@
 
 class Xoroshiro128PP {
 
-    // TODO: #1 should use splitmix64 to seed
+    // TODO:(manu) #1 should use splitmix64 to seed
     uint64_t s[2] = {0xa3b195354a39b70dull, 0xc0ef3d7a9e9b1d4full};
 
     static inline uint64_t rotl(const uint64_t x, int k) {
@@ -14,7 +14,7 @@ class Xoroshiro128PP {
 
 public:
 
-    // TODO: #1 should use splitmix64 to seed
+    // TODO:(manu) #1 should use splitmix64 to seed
     Xoroshiro128PP() noexcept = default;
 
     uint64_t next() noexcept {
